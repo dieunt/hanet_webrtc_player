@@ -14,12 +14,4 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
-
-flutter:
-  plugin:
-    platforms:
-      android:
-        default_package: hanet_webrtc_player
-      ios:
-        default_package: hanet_webrtc_player 
+  flutter_lints: ^2.0.0 
