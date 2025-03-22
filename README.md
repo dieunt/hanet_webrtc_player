@@ -1,12 +1,17 @@
 # Hanet WebRTC Player
 
-A WebRTC video player widget component for Flutter applications. Currently displays a black rectangle as a placeholder for WebRTC video content.
+A WebRTC video player widget component for Flutter applications with built-in controls for volume, microphone, and fullscreen mode.
 
 ## Features
 
--   Simple black rectangle widget that can be used as a placeholder for WebRTC video content
--   Customizable width and height
--   Ready to be extended with actual WebRTC video playback functionality
+-   Responsive black rectangle container that adapts to parent container size
+-   Volume control toggle (on/off)
+-   Microphone control toggle (on/off)
+-   Fullscreen mode support
+    -   On mobile: Rotates to landscape and hides system UI
+    -   On web: Expands to full screen
+-   Material Design icons for controls
+-   Gradient overlay for better button visibility
 
 ## Getting Started
 
@@ -26,15 +31,43 @@ dependencies:
 ```dart
 import 'package:hanet_webrtc_player/hanet_webrtc_player.dart';
 
-// Use the widget with default size (300x200)
+// Basic usage
 HanetWebRTCPlayer()
 
-// Or specify custom dimensions
-HanetWebRTCPlayer(
+// Inside a container with specific dimensions
+Container(
   width: 400,
   height: 300,
+  child: HanetWebRTCPlayer(),
+)
+
+// Inside a responsive container
+Expanded(
+  child: HanetWebRTCPlayer(),
 )
 ```
+
+## Features
+
+### Volume Control
+
+-   Toggle between volume on/off using the volume icon
+-   Default state is volume on
+
+### Microphone Control
+
+-   Toggle between microphone on/off using the mic icon
+-   Default state is microphone on
+
+### Fullscreen Mode
+
+-   Toggle fullscreen mode using the fullscreen icon
+-   On mobile devices:
+    -   Rotates to landscape orientation
+    -   Hides system UI for immersive experience
+-   On web:
+    -   Expands to full screen
+-   Automatically resets orientation when widget is disposed
 
 ## Development
 
