@@ -2,6 +2,7 @@ name: hanet_webrtc_player
 description: A WebRTC video player widget component for Flutter applications.
 version: 0.0.1
 homepage: https://github.com/dieunt/hanet_webrtc_player
+publish_to: none
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -10,6 +11,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_webrtc: ^0.12.12+hotfix.1
+  shared_preferences: ^2.0.9
+  path_provider: ^2.0.7
+  event_bus: ^2.0.0  
+  uuid: ^4.4.0
+  video_player: ^2.8.1
+  web_socket_channel: ^2.4.0
 
 dev_dependencies:
   flutter_test:
