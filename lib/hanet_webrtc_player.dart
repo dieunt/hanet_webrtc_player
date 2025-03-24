@@ -1,4 +1,4 @@
-import 'dart:io' show Platform; // Thêm import này để kiểm tra nền tảng
+import 'package:flutter/foundation.dart' show kIsWeb; // Thêm để kiểm tra Web
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -31,26 +31,26 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeWebRTC();
-    _resetOrientation(); // Đặt orientation mặc định khi khởi tạo
+    if (!kIsWeb) _resetOrientation(); // Chỉ reset orientation trên Mobile
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _webrtcManager?.dispose();
-    _resetOrientation(); // Reset orientation khi widget bị hủy
+    if (!kIsWeb) _resetOrientation(); // Chỉ reset orientation trên Mobile
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _resetOrientation(); // Reset orientation khi app được reload/resume
+    if (!kIsWeb && state == AppLifecycleState.resumed) {
+      _resetOrientation(); // Chỉ reset trên Mobile khi resume
     }
   }
 
   void _resetOrientation() {
-    // Ép buộc portrait khi thoát fullscreen hoặc khởi tạo
+    if (kIsWeb) return; // Không làm gì trên Web
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -94,19 +94,19 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   Future<void> _toggleFullscreen() async {
+    if (kIsWeb) return; // Không làm gì trên Web
+
     setState(() {
       _isFullscreen = !_isFullscreen;
     });
 
     if (_isFullscreen) {
-      // Vào fullscreen: Chỉ cho phép landscape
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeLeft,
         DeviceOrientation.landscapeRight,
       ]);
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     } else {
-      // Thoát fullscreen: Ép buộc portrait trên iOS Simulator
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
       ]);
@@ -114,14 +114,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
         SystemUiMode.manual,
         overlays: SystemUiOverlay.values,
       );
-
-      // Thêm bước delay nhỏ để đảm bảo Simulator áp dụng orientation
-      if (Platform.isIOS) {
-        await Future.delayed(const Duration(milliseconds: 100));
-        await SystemChrome.setPreferredOrientations([
-          DeviceOrientation.portraitUp,
-        ]);
-      }
     }
   }
 
@@ -136,9 +128,11 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     final isLandscape = _isFullscreen;
 
     return PopScope(
-      canPop: !_isFullscreen,
+      canPop: !kIsWeb
+          ? !_isFullscreen
+          : true, // Chỉ chặn pop trên Mobile khi fullscreen
       onPopInvoked: (didPop) async {
-        if (_isFullscreen && !didPop) await _toggleFullscreen();
+        if (!kIsWeb && _isFullscreen && !didPop) await _toggleFullscreen();
       },
       child: Scaffold(
         body: SizedBox.expand(
@@ -163,10 +157,10 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 0,
-                    vertical: isLandscape ? 0 : 0,
-                  ),
+                  // padding: EdgeInsets.symmetric(
+                  //   horizontal: 16.0,
+                  //   vertical: isLandscape ? 32.0 : 24.0,
+                  // ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
@@ -225,19 +219,21 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
                         ),
                         onPressed: _captureFrame,
                       ),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints.tight(
-                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
-                        icon: Icon(
-                          _isFullscreen
-                              ? Icons.fullscreen_exit
-                              : Icons.fullscreen,
-                          color: Colors.white,
-                          size: isLandscape ? 32 : 24,
+                      // Chỉ hiển thị nút fullscreen trên Mobile
+                      if (!kIsWeb)
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints.tight(Size(
+                              isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
+                          icon: Icon(
+                            _isFullscreen
+                                ? Icons.fullscreen_exit
+                                : Icons.fullscreen,
+                            color: Colors.white,
+                            size: isLandscape ? 32 : 24,
+                          ),
+                          onPressed: _toggleFullscreen,
                         ),
-                        onPressed: _toggleFullscreen,
-                      ),
                     ],
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +8,7 @@ import 'signaling.dart';
 import 'utils/event_bus_util.dart';
 import 'utils/event_message.dart';
 import 'utils/random_string.dart';
-import 'utils/proxy_websocket.dart';
+import 'utils/websocket.dart';
 import 'utils/LogUtil.dart';
 
 /// A class that manages WebSocket connection and WebRTC signaling
@@ -16,7 +17,7 @@ class WebRTCManager {
   final String _serverUrl = "https://webrtc-stream.hanet.ai/wswebclient/";
   String _selfId = "";
   String _peerId = "";
-  ProxyWebSocket? _socket;
+  WebSocket? _socket;
   var _delSessionMsgEvent;
   var _newSessionMsgEvent;
   Map<String, String> _sessions = {};
@@ -139,7 +140,7 @@ class WebRTCManager {
 
   void _connectWebSocket() {
     LogUtil.v('WM: Connecting to WebSocket server...');
-    _socket = ProxyWebSocket(_serverUrl + _selfId);
+    _socket = WebSocket(_serverUrl + (kIsWeb ? _peerId : _selfId));
     _socket?.onMessage = (message) {
       _handleWebSocketMessage(message);
     };

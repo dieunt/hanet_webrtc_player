@@ -1,110 +1,75 @@
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html';
 import 'dart:async';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 import 'websocket_base.dart';
+import 'LogUtil.dart';
 
-/// WebSocket implementation for web platforms
-class WebWebSocket extends WebSocketBase {
-  String _url;
-  WebSocket? _socket;
-  Timer? _reconnectTimer;
-  Timer? _heartbeatTimer;
-  bool _isConnecting = false;
-  static const int _maxReconnectAttempts = 5;
-  static const Duration _reconnectDelay = Duration(seconds: 2);
-  static const Duration _heartbeatInterval = Duration(seconds: 30);
-  int _reconnectAttempts = 0;
+class PlatformWebSocket implements WebSocketBase {
+  final String _url;
+  html.WebSocket? _webSocket;
 
-  WebWebSocket(this._url) {
-    _url = _url.replaceAll('https:', 'wss:');
-  }
+  PlatformWebSocket(String url) : _url = url.replaceAll('https:', 'wss:');
 
   @override
-  bool get isConnected => _socket?.readyState == WebSocket.OPEN;
+  Function()? onOpen;
+
+  @override
+  Function(dynamic msg)? onMessage;
+
+  @override
+  Function(int code, String reason)? onClose;
 
   @override
   Future<void> connect() async {
-    if (_isConnecting) return;
-    _isConnecting = true;
-
     try {
-      _socket = WebSocket(_url);
-      _setupSocketListeners();
-      _startHeartbeat();
-      _reconnectAttempts = 0;
+      _webSocket = html.WebSocket(_url);
+      _webSocket?.onOpen.listen((_) {
+        onOpen?.call();
+      });
+
+      _webSocket?.onMessage.listen((event) {
+        onMessage?.call(event.data);
+      });
+
+      _webSocket?.onClose.listen((event) {
+        onClose?.call(event.code ?? 1000, event.reason ?? 'Connection closed');
+      });
+
+      _webSocket?.onError.listen((event) {
+        onClose?.call(500, 'WebSocket error: $event');
+      });
     } catch (e) {
-      _handleError(e);
-    } finally {
-      _isConnecting = false;
+      onClose?.call(500, e.toString());
     }
-  }
-
-  void _setupSocketListeners() {
-    _socket?.onOpen.listen((_) {
-      onOpen?.call();
-    });
-
-    _socket?.onMessage.listen((e) {
-      onMessage?.call(e.data);
-    });
-
-    _socket?.onClose.listen((e) {
-      _handleClose(e.code ?? 500, e.reason);
-    });
-
-    _socket?.onError.listen((e) {
-      _handleError(e);
-    });
-  }
-
-  void _startHeartbeat() {
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(_heartbeatInterval, (timer) {
-      if (isConnected) {
-        send('ping');
-      }
-    });
-  }
-
-  void _handleClose(int code, String? reason) {
-    _heartbeatTimer?.cancel();
-    print('WebSocket closed by server');
-    onClose?.call(code, reason ?? 'Unknown reason');
-    _attemptReconnect();
-  }
-
-  void _handleError(dynamic error) {
-    print('WebSocket error: $error');
-    onClose?.call(500, error.toString());
-    _attemptReconnect();
-  }
-
-  void _attemptReconnect() {
-    if (_reconnectAttempts >= _maxReconnectAttempts) {
-      print('Max reconnection attempts reached');
-      return;
-    }
-
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(_reconnectDelay, () {
-      _reconnectAttempts++;
-      connect();
-    });
   }
 
   @override
   void send(dynamic data) {
-    if (!isConnected) {
-      print('WebSocket not connected, message not sent');
-      return;
+    if (_webSocket != null && _webSocket?.readyState == html.WebSocket.OPEN) {
+      _webSocket?.send(data);
+    } else {
+      LogUtil.d('WebSocket not connected, message $data not sent');
     }
-    _socket?.send(data);
   }
 
   @override
   void close() {
-    _heartbeatTimer?.cancel();
-    _reconnectTimer?.cancel();
-    _socket?.close();
+    _webSocket?.close();
+  }
+
+  @override
+  bool get isConnected => _webSocket?.readyState == html.WebSocket.OPEN;
+
+  @override
+  void listen(
+    void Function(dynamic) onData, {
+    Function? onError,
+    void Function()? onDone,
+  }) {
+    _webSocket?.onMessage.listen(
+      (event) => onData(event.data),
+      onError: onError,
+      onDone: onDone,
+    );
   }
 }

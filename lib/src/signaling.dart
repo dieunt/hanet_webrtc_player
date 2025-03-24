@@ -457,7 +457,7 @@ class Signaling {
     // Send the call request with all parameters
     _send('__call', {
       "sessionId": sessionId,
-      'sessionType': "flutter",
+      'sessionType': kIsWeb ? "IE" : "flutter",
       'messageId': RandomString.randomNumeric(32),
       'from': _selfId,
       'to': peerId,

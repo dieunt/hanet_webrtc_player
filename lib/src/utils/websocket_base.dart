@@ -22,4 +22,11 @@ abstract class WebSocketBase {
 
   /// Get the current connection state
   bool get isConnected;
+
+  /// Listen for data from the WebSocket
+  void listen(
+    void Function(dynamic) onData, {
+    Function? onError,
+    void Function()? onDone,
+  });
 }
