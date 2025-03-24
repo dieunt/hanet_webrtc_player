@@ -1,15 +1,12 @@
+import 'dart:io' show Platform; // Thêm import này để kiểm tra nền tảng
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'src/webrtc_manager.dart';
 
-/// A WebRTC video player widget with volume, mic, and fullscreen controls.
-/// This widget is designed for single player usage.
 class HanetWebRTCPlayer extends StatefulWidget {
-  /// The ID of the remote peer to connect to
   final String peerId;
 
-  /// Creates a new instance of [HanetWebRTCPlayer].
   const HanetWebRTCPlayer({
     super.key,
     required this.peerId,
@@ -19,39 +16,66 @@ class HanetWebRTCPlayer extends StatefulWidget {
   State<HanetWebRTCPlayer> createState() => _HanetWebRTCPlayerState();
 }
 
-class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> {
-  // UI state
+class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
+    with WidgetsBindingObserver {
   bool _isVolumeOn = true;
   bool _isMicOn = true;
   bool _isFullscreen = false;
   bool _isRecording = false;
+  bool _showRemoteVideo = false;
 
-  // WebRTC manager
   WebRTCManager? _webrtcManager;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeWebRTC();
+    _resetOrientation(); // Đặt orientation mặc định khi khởi tạo
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _webrtcManager?.dispose();
+    _resetOrientation(); // Reset orientation khi widget bị hủy
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _resetOrientation(); // Reset orientation khi app được reload/resume
+    }
+  }
+
+  void _resetOrientation() {
+    // Ép buộc portrait khi thoát fullscreen hoặc khởi tạo
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
   }
 
   void _initializeWebRTC() {
-    _webrtcManager = WebRTCManager(
-      peerId: widget.peerId,
-    );
+    _webrtcManager = WebRTCManager(peerId: widget.peerId);
 
-    // Set up callbacks
     _webrtcManager?.onRecordingStateChanged = (isRecording) {
-      setState(() {
-        _isRecording = isRecording;
-      });
+      if (mounted) setState(() => _isRecording = isRecording);
+    };
+
+    _webrtcManager?.onRemoteStream = (stream) {
+      if (mounted && stream != null) setState(() => _showRemoteVideo = true);
     };
 
     _webrtcManager?.onError = (error) {
-      // Handle error (e.g., show a snackbar)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error)));
+      }
     };
   }
 
@@ -70,8 +94,19 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> {
   }
 
   Future<void> _toggleFullscreen() async {
+    setState(() {
+      _isFullscreen = !_isFullscreen;
+    });
+
     if (_isFullscreen) {
-      // Exit fullscreen
+      // Vào fullscreen: Chỉ cho phép landscape
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      // Thoát fullscreen: Ép buộc portrait trên iOS Simulator
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
       ]);
@@ -79,131 +114,138 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> {
         SystemUiMode.manual,
         overlays: SystemUiOverlay.values,
       );
-    } else {
-      // Enter fullscreen
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-      await SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.immersiveSticky,
-        overlays: [],
-      );
+
+      // Thêm bước delay nhỏ để đảm bảo Simulator áp dụng orientation
+      if (Platform.isIOS) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+        ]);
+      }
     }
-    setState(() {
-      _isFullscreen = !_isFullscreen;
-    });
   }
 
-  Future<void> _startRecording() async {
-    await _webrtcManager?.startRecording();
-  }
-
-  Future<void> _stopRecording() async {
-    await _webrtcManager?.stopRecording();
-  }
-
-  Future<void> _captureFrame() async {
-    await _webrtcManager?.captureFrame();
-  }
+  Future<void> _startRecording() async =>
+      await _webrtcManager?.startRecording();
+  Future<void> _stopRecording() async => await _webrtcManager?.stopRecording();
+  Future<void> _captureFrame() async => await _webrtcManager?.captureFrame();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      child: Stack(
-        children: [
-          // Main video container
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: Colors.black,
-            child: RTCVideoView(
-              _webrtcManager?.remoteRenderer ?? RTCVideoRenderer(),
-              objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-            ),
-          ),
-          // Control buttons at the bottom
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
+    final size = MediaQuery.of(context).size;
+    final isLandscape = _isFullscreen;
+
+    return PopScope(
+      canPop: !_isFullscreen,
+      onPopInvoked: (didPop) async {
+        if (_isFullscreen && !didPop) await _toggleFullscreen();
+      },
+      child: Scaffold(
+        body: SizedBox.expand(
+          child: Stack(
+            children: [
+              SizedBox.expand(
+                child: Container(
+                  color: Colors.black,
+                  child: _showRemoteVideo && _webrtcManager != null
+                      ? RTCVideoView(
+                          _webrtcManager!.remoteRenderer,
+                          objectFit:
+                              RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                        )
+                      : const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Volume button
-                  IconButton(
-                    icon: Icon(
-                      _isVolumeOn ? Icons.volume_up : Icons.volume_off,
-                      color: Colors.white,
-                    ),
-                    onPressed: _toggleVolume,
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 0,
+                    vertical: isLandscape ? 0 : 0,
                   ),
-                  // Mic button
-                  IconButton(
-                    icon: Icon(
-                      _isMicOn ? Icons.mic : Icons.mic_off,
-                      color: Colors.white,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
                     ),
-                    onPressed: _toggleMic,
                   ),
-                  // Record button
-                  IconButton(
-                    icon: Icon(
-                      _isRecording ? Icons.stop : Icons.fiber_manual_record,
-                      color: _isRecording ? Colors.red : Colors.white,
-                    ),
-                    onPressed: _isRecording ? _stopRecording : _startRecording,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints.tight(
+                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
+                        icon: Icon(
+                          _isVolumeOn ? Icons.volume_up : Icons.volume_off,
+                          color: Colors.white,
+                          size: isLandscape ? 32 : 24,
+                        ),
+                        onPressed: _toggleVolume,
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints.tight(
+                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
+                        icon: Icon(
+                          _isMicOn ? Icons.mic : Icons.mic_off,
+                          color: Colors.white,
+                          size: isLandscape ? 32 : 24,
+                        ),
+                        onPressed: _toggleMic,
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints.tight(
+                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
+                        icon: Icon(
+                          _isRecording ? Icons.stop : Icons.fiber_manual_record,
+                          color: _isRecording ? Colors.red : Colors.white,
+                          size: isLandscape ? 32 : 24,
+                        ),
+                        onPressed:
+                            _isRecording ? _stopRecording : _startRecording,
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints.tight(
+                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
+                        icon: Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: isLandscape ? 32 : 24,
+                        ),
+                        onPressed: _captureFrame,
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints.tight(
+                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
+                        icon: Icon(
+                          _isFullscreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                          color: Colors.white,
+                          size: isLandscape ? 32 : 24,
+                        ),
+                        onPressed: _toggleFullscreen,
+                      ),
+                    ],
                   ),
-                  // Capture frame button
-                  IconButton(
-                    icon: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                    ),
-                    onPressed: _captureFrame,
-                  ),
-                  // Fullscreen button
-                  IconButton(
-                    icon: Icon(
-                      _isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                      color: Colors.white,
-                    ),
-                    onPressed: _toggleFullscreen,
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _webrtcManager?.dispose();
-
-    // Reset orientation when widget is disposed
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
-    super.dispose();
   }
 }

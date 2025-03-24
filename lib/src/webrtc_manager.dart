@@ -60,8 +60,8 @@ class WebRTCManager {
     _signaling = Signaling(
       _selfId,
       peerId,
-      false, // onlyDatachannel
-      false, // localVideo
+      false, // onlyDatachannel should be false to allow media
+      true, // localVideo should be true to enable video
     );
 
     // Set up signaling message handler BEFORE connecting
@@ -71,18 +71,23 @@ class WebRTCManager {
 
     // Set up callbacks
     _signaling?.onLocalStream = (stream) {
+      LogUtil.v(
+          "WM: Local stream received with ${stream.getTracks().length} tracks");
       _localRenderer.srcObject = stream;
       _localStream = stream;
       onLocalStream?.call(stream);
     };
 
     _signaling?.onAddRemoteStream = (session, stream) {
+      LogUtil.v(
+          "WM: Remote stream received with ${stream.getTracks().length} tracks");
       _remoteRenderer.srcObject = stream;
       _remoteStream = stream;
       onRemoteStream?.call(stream);
     };
 
     _signaling?.onRemoveRemoteStream = (session, stream) {
+      LogUtil.v("WM: Remote stream removed");
       _remoteRenderer.srcObject = null;
       _remoteStream = null;
       onRemoteStream?.call(null);
@@ -101,13 +106,13 @@ class WebRTCManager {
           peerId,
           true, // audio
           true, // video
-          false, // localAudio
+          true, // localAudio
           false, // localVideo
-          false, // datachannel
-          'realtime', // mode
-          'main', // source
-          '', // user
-          '', // password
+          true, // datachannel
+          'live', // mode
+          'MainStream', // source
+          'admin', // user
+          '123456', // password
         );
       }
     };
@@ -134,7 +139,7 @@ class WebRTCManager {
 
   void _connectWebSocket() {
     LogUtil.v('WM: Connecting to WebSocket server...');
-    _socket = ProxyWebSocket(_serverUrl + _peerId);
+    _socket = ProxyWebSocket(_serverUrl + _selfId);
     _socket?.onMessage = (message) {
       _handleWebSocketMessage(message);
     };
@@ -159,7 +164,8 @@ class WebRTCManager {
         // Log the received message in a formatted way
         try {
           final jsonMessage = jsonDecode(message);
-          LogUtil.v('WM: Received WebSocket message: ${jsonEncode(jsonMessage)}');
+          LogUtil.v(
+              'WM: Received WebSocket message: ${jsonEncode(jsonMessage)}');
         } catch (e) {
           // If it's not JSON, log the raw message
           LogUtil.v('WM: Received WebSocket message (raw): $message');

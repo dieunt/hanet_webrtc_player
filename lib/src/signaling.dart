@@ -67,6 +67,18 @@ enum OnlineState {
   error,
 }
 
+/// Represents the direction and state of media (audio/video)
+class MediaDirection {
+  /// Whether the media type is enabled
+  final bool enabled;
+
+  /// Whether local media is enabled
+  final bool isLocal;
+
+  /// Creates a new MediaDirection instance
+  const MediaDirection(this.enabled, this.isLocal);
+}
+
 /// Represents a WebRTC session between peers
 class Session {
   /// Creates a new session with the given session ID and peer ID
@@ -515,305 +527,317 @@ class Signaling {
     return res;
   }
 
-  void onMessage(message) async {
-    Map<String, dynamic> mapData = _decoder.convert(message);
-    var data = mapData['data'];
+  void onMessage(dynamic message) async {
+    Map<String, dynamic> mapData = jsonDecode(message);
     var eventName = mapData['eventName'];
+    var data = mapData['data'];
+
+    LogUtil.v('Signaling: Processing message type: $eventName');
+
     switch (eventName) {
       case '_create':
-        {
-          var sessionId = data['sessionId'];
-          var peerId = data['from'];
-          if (compare(sessionId, _sessionId) == 0) {
-            var iceServers = data['iceServers'];
-            if (iceServers != null) {
-              if (iceServers is String) {
-                // LogUtil.v("Signaling: iceServers $iceServers");
-                _iceServers = _decoder.convert(iceServers);
-              } else {
-                var subiceServers = iceServers['iceServers'];
-                if (subiceServers == null) {
-                  _iceServers = subiceServers;
-                } else {
-                  _iceServers = iceServers;
-                }
-              }
-            }
-            var state = data['state'];
-            if (state != null) {
-              if (compare(state, "online") == 0) {
-                LogUtil.v("Signaling: Session state: online");
-                onSessionCreate?.call(sessionId, peerId, OnlineState.online);
-              } else if (compare(state, "sleep") == 0) {
-                LogUtil.v("Signaling: Session state: sleep");
-                onSessionCreate?.call(sessionId, peerId, OnlineState.sleep);
-              } else {
-                LogUtil.v("Signaling: Session state: offline");
-                onSessionCreate?.call(sessionId, peerId, OnlineState.offline);
-              }
-            } else {
-              LogUtil.v("Signaling: Session state: error");
-              onSessionCreate?.call(sessionId, peerId, OnlineState.error);
-            }
-          } else {
-            LogUtil.v("Signaling: Session state: error");
-            onSessionCreate?.call(sessionId, peerId, OnlineState.error);
-          }
-        }
+        _handleCreateMessage(data);
         break;
-      case '_call':
-        {
-          var sessionId = data['sessionId'];
-          if (sessionId == null) {
-            return;
-          }
-          var peerId = data['from'];
-          if (peerId == null) {
-            return;
-          }
-          var iceServers = data['iceservers'];
-          if (iceServers != null) {
-            // print('_call iceServers ----------=$iceServers');
-            _iceServers = _decoder.convert(iceServers);
-          }
-          var datachannel = data['datachannel'];
-          var audiodir = data['audio'];
-          var videodir = data['video'];
-          var user = data['user'];
-          var pwd = data['pwd'];
-          var usedatachannel = false;
-          var useaudio = false;
-          var usevideo = false;
-          if (datachannel == null) {
-          } else {
-            if (compare(datachannel, "true") == 0) {
-              usedatachannel = true;
-            }
-          }
-          if (audiodir == null) {
-          } else {
-            if (compare(audiodir, "sendrecv") == 0) {
-              useaudio = true;
-              _localAudio = true;
-            } else if (compare(audiodir, "sendonly") == 0) {
-              useaudio = true;
-              _localAudio = true;
-            } else if (compare(audiodir, "recvonly") == 0) {
-              useaudio = true;
-              _localAudio = false;
-            } else if (compare(audiodir, "true") == 0) {
-              useaudio = true;
-              _localAudio = true;
-            }
-          }
 
-          if (videodir == null) {
-          } else {
-            if (compare(videodir, "sendrecv") == 0) {
-              usevideo = true;
-              _localVideo = true;
-            } else if (compare(videodir, "sendonly") == 0) {
-              usevideo = true;
-              _localVideo = true;
-            } else if (compare(videodir, "recvonly") == 0) {
-              usevideo = false;
-              _localVideo = false;
-            } else if (compare(videodir, "true") == 0) {
-              usevideo = true;
-              _localVideo = true;
-            }
-          }
-          invite(sessionId, peerId, useaudio, usevideo, _localAudio,
-              _localVideo, usedatachannel, _mode, _source, _user, _password);
-        }
-        break;
       case '_offer':
-        {
-          var delay = RandomString.currentTimeMillis() - _startTime;
-          // LogUtil.v("Signaling: Received offer after delay: $delay");
-          var iceServers = data['iceservers'];
-          if (iceServers != null && iceServers.toString().isNotEmpty) {
-            _iceServers = _decoder.convert(iceServers);
-          }
-          var peerId = data['from'];
-          var sdp = data['sdp'];
-          // LogUtil.v("Signaling: Received offer SDP: $sdp");
-          var datachannel = data['datachannel'];
-          var audiodir = data['audio'];
-          var videodir = data['video'];
-          var user = data['user'];
-          var pwd = data['pwd'];
-          var usedatachannel = true;
-          var useaudio = true;
-          var usevideo = false;
-          if (datachannel == null) {
-          } else {
-            if (compare(datachannel, "true") == 0) {
-              usedatachannel = true;
-            }
-          }
-          if (audiodir == null) {
-          } else {
-            if (compare(audiodir, "sendrecv") == 0) {
-              useaudio = true;
-              _localAudio = true;
-            } else if (compare(audiodir, "sendonly") == 0) {
-              useaudio = true;
-              _localAudio = false;
-            } else if (compare(audiodir, "recvonly") == 0) {
-              useaudio = true;
-              _localAudio = true;
-            } else if (compare(audiodir, "true") == 0) {
-              useaudio = true;
-              _localAudio = true;
-            }
-          }
-          if (videodir == null) {
-          } else {
-            if (compare(videodir, "sendrecv") == 0) {
-              usevideo = true;
-              _localVideo = true;
-            } else if (compare(videodir, "sendonly") == 0) {
-              usevideo = true;
-              _localVideo = false;
-            } else if (compare(videodir, "recvonly") == 0) {
-              usevideo = true;
-              _localVideo = true;
-            } else if (compare(videodir, "true") == 0) {
-              usevideo = true;
-              _localVideo = true;
-            }
-          }
-          var sessionId = data['sessionId'];
-          var session = _sessions[sessionId];
-          var newSession = await _createSession(session,
-              peerId: peerId,
-              sessionId: sessionId,
-              audio: useaudio,
-              video: usevideo,
-              dataChannel: usedatachannel);
-          _sessions[sessionId] = newSession;
-          if (newSession != null && usedatachannel == true) {
-            _createDataChannel(newSession);
-          }
-
-          await newSession.pc
-              ?.setRemoteDescription(RTCSessionDescription(sdp, "offer"));
-          await _createAnswer(newSession);
-          if (newSession.remoteCandidates.isNotEmpty) {
-            newSession.remoteCandidates.forEach((candidate) async {
-              await newSession.pc?.addCandidate(candidate);
-            });
-            newSession.remoteCandidates.clear();
-          }
-          if (remoteCandidates.isNotEmpty) {
-            remoteCandidates.forEach((candidate) async {
-              var candi = candidate.candidate;
-              await newSession.pc?.addCandidate(candidate);
-            });
-            remoteCandidates.clear();
-          }
-
-          onCallStateChange?.call(newSession, CallState.callStateNew);
-        }
+        await _handleOfferMessage(data);
         break;
+
+      case '_call':
+        _handleCallMessage(data);
+        break;
+
       case '_answer':
-        {
-          var type = data['type'];
-          var sdp = data['sdp'];
-          // LogUtil.v("Signaling: Received answer SDP: $sdp");
-          var sessionId = data['sessionId'];
-          if (compare(sessionId, _sessionId) == 0) {
-            var session = _sessions[sessionId];
-            session?.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
-          }
-        }
+        _handleAnswerMessage(data);
         break;
+
       case '_ice_candidate':
-        {
-          var peerId = data['from'];
-          var candidateMap = data['candidate'];
-          var candidateobject = _decoder.convert(candidateMap);
-          var scandidate = candidateobject['candidate'];
-          var nsdpMLineIndex = candidateobject['sdpMLineIndex'];
-          var ssdpMid = candidateobject['sdpMid'];
-          var sessionId = data['sessionId'];
-          if (compare(sessionId, _sessionId) == 0) {
-            // print(
-            //     'recv candidate-<<<-----------sdpMLineIndex :$nsdpMLineIndex sdpMid: $ssdpMid candidate: $scandidate');
-            var session = _sessions[sessionId];
-            RTCIceCandidate candidate =
-                RTCIceCandidate(scandidate, ssdpMid, nsdpMLineIndex);
-
-            if (session != null) {
-              if (session.pc != null) {
-                // print('addCandidate-----------candidate: $scandidate');
-                await session.pc?.addCandidate(candidate);
-              } else {
-                // print('addCandidate-----------add tmp: $scandidate');
-                session.remoteCandidates.add(candidate);
-              }
-            } else {
-              remoteCandidates.add(candidate);
-
-              // print(
-              //     'addCandidate--------sessionId--$sessionId -add candidate------------: $scandidate');
-              //_sessions[sessionId] = Session(pid: peerId, sid: sessionId)..remoteCandidates.add(candidate);
-            }
-          }
-        }
+        await _handleIceCandidateMessage(data);
         break;
+
       case '_disconnected':
-        {
-          var sessionId = data['sessionId'];
-          if (compare(sessionId, _sessionId) == 0) {
-            LogUtil.v("Signaling: Session disconnected: $sessionId");
-            var session = _sessions.remove(sessionId);
-            if (session != null) {
-              onCallStateChange?.call(session, CallState.callStateBye);
-              _closeSession(session);
-            }
-          }
-        }
+        _handleDisconnectedMessage(data);
         break;
+
       case '_session_failed':
-        {
-          var sessionId = data['sessionId'];
-          if (compare(sessionId, _sessionId) == 0) {
-            LogUtil.v("Signaling: Session failed: $sessionId");
-            var session = _sessions.remove(sessionId);
-            if (session != null) {
-              onCallStateChange?.call(session, CallState.callStateBye);
-              _closeSession(session);
-            }
-          }
-        }
+        _handleSessionFailedMessage(data);
         break;
+
       case '_post_message':
-        {
-          var sessionId = data['sessionId'];
-          if (compare(sessionId, _sessionId) == 0) {
-            var session = _sessions[sessionId];
-            var message = data['message'];
-            LogUtil.v("Signaling: Received post message: $message");
-            if (session != null) {
-              onRecvSignalingMessage?.call(session, message);
-            }
-          }
-        }
+        _handlePostMessage(data);
         break;
+
       case '_connectinfo':
         LogUtil.v("Signaling: Received connect info");
         break;
+
       case '_ping':
-        {
-          LogUtil.v("Signaling: Received keepalive response");
-        }
+        LogUtil.v("Signaling: Received keepalive response");
         break;
+
       default:
         LogUtil.v("Signaling: Received unknown message type: $eventName");
         break;
     }
+  }
+
+  void _handleCreateMessage(Map<String, dynamic> data) {
+    var sessionId = data['sessionId'];
+    var peerId = data['from'];
+    var state = data['state'];
+
+    // Handle ICE servers configuration if provided
+    var iceServers = data['iceServers'];
+    if (iceServers != null) {
+      if (iceServers is String) {
+        LogUtil.v('Signaling: Updating ICE servers from string');
+        _iceServers = _decoder.convert(iceServers);
+      } else {
+        var subIceServers = iceServers['iceServers'];
+        _iceServers = subIceServers ?? iceServers;
+      }
+    }
+
+    // Determine online state
+    if (state != null) {
+      if (compare(state, "online") == 0) {
+        onSessionCreate?.call(sessionId, peerId, OnlineState.online);
+      } else if (compare(state, "sleep") == 0) {
+        onSessionCreate?.call(sessionId, peerId, OnlineState.sleep);
+      } else {
+        onSessionCreate?.call(sessionId, peerId, OnlineState.offline);
+      }
+    } else {
+      onSessionCreate?.call(sessionId, peerId, OnlineState.error);
+    }
+  }
+
+  Future<void> _handleOfferMessage(Map<String, dynamic> data) async {
+    try {
+      var sessionId = data['sessionId'];
+      var peerId = data['from'];
+      var sdp = data['sdp'];
+
+      if (sessionId == null || peerId == null || sdp == null) {
+        LogUtil.v("Signaling: Missing required fields in offer message");
+        return;
+      }
+
+      // Update ICE servers if provided
+      var iceServers = data['iceservers'];
+      if (iceServers != null && iceServers.toString().isNotEmpty) {
+        _iceServers = _decoder.convert(iceServers);
+      }
+
+      // Parse media directions
+      var useDataChannel = _parseDirection(data['datachannel'], true);
+      var useAudio = _parseAudioDirection(data['audio']);
+      var useVideo = _parseVideoDirection(data['video']);
+
+      // Create or get existing session
+      var session = _sessions[sessionId];
+      var newSession = await _createSession(session,
+          peerId: peerId,
+          sessionId: sessionId,
+          audio: useAudio.enabled,
+          video: useVideo.enabled,
+          dataChannel: useDataChannel);
+
+      _sessions[sessionId] = newSession;
+
+      // Set up data channel if needed
+      if (useDataChannel) {
+        _createDataChannel(newSession);
+      }
+
+      // Set remote description and create answer
+      await newSession.pc
+          ?.setRemoteDescription(RTCSessionDescription(sdp, "offer"));
+      await _createAnswer(newSession);
+
+      // Add any pending candidates
+      await _addPendingCandidates(newSession);
+
+      onCallStateChange?.call(newSession, CallState.callStateNew);
+    } catch (e) {
+      LogUtil.v("Signaling: Error handling offer message: $e");
+    }
+  }
+
+  void _handleCallMessage(Map<String, dynamic> data) {
+    if (data['sessionId'] == null || data['from'] == null) {
+      LogUtil.v("Signaling: Missing required fields in call message");
+      return;
+    }
+
+    var sessionId = data['sessionId'];
+    var peerId = data['from'];
+
+    // Update ICE servers if provided
+    var iceServers = data['iceservers'];
+    if (iceServers != null) {
+      _iceServers = _decoder.convert(iceServers);
+    }
+
+    // Parse media directions
+    var useDataChannel = _parseDirection(data['datachannel'], true);
+    var useAudio = _parseAudioDirection(data['audio']);
+    var useVideo = _parseVideoDirection(data['video']);
+
+    // Create session with parsed parameters
+    invite(
+        sessionId,
+        peerId,
+        useAudio.enabled,
+        useVideo.enabled,
+        useAudio.isLocal,
+        useVideo.isLocal,
+        useDataChannel,
+        _mode,
+        _source,
+        _user,
+        _password);
+  }
+
+  void _handleAnswerMessage(Map<String, dynamic> data) {
+    var sessionId = data['sessionId'];
+    if (compare(sessionId, _sessionId) == 0) {
+      var session = _sessions[sessionId];
+      var type = data['type'];
+      var sdp = data['sdp'];
+
+      if (session != null && type != null && sdp != null) {
+        session.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
+      }
+    }
+  }
+
+  Future<void> _handleIceCandidateMessage(Map<String, dynamic> data) async {
+    try {
+      var sessionId = data['sessionId'];
+      if (compare(sessionId, _sessionId) != 0) {
+        return;
+      }
+
+      var candidateMap = data['candidate'];
+      if (candidateMap == null) {
+        return;
+      }
+
+      var candidateObj = _decoder.convert(candidateMap);
+      var candidate = candidateObj['candidate'];
+      var sdpMLineIndex = candidateObj['sdpMLineIndex'];
+      var sdpMid = candidateObj['sdpMid'];
+
+      if (candidate == null || sdpMLineIndex == null || sdpMid == null) {
+        LogUtil.v("Signaling: Invalid ICE candidate data");
+        return;
+      }
+
+      var session = _sessions[sessionId];
+      var iceCandidate = RTCIceCandidate(candidate, sdpMid, sdpMLineIndex);
+
+      if (session != null) {
+        if (session.pc != null) {
+          LogUtil.v("Signaling: Adding ICE candidate");
+          await session.pc?.addCandidate(iceCandidate);
+        } else {
+          LogUtil.v("Signaling: Storing ICE candidate for later");
+          session.remoteCandidates.add(iceCandidate);
+        }
+      } else {
+        LogUtil.v("Signaling: No session found, storing candidate globally");
+        remoteCandidates.add(iceCandidate);
+      }
+    } catch (e) {
+      LogUtil.v("Signaling: Error handling ICE candidate: $e");
+    }
+  }
+
+  void _handleDisconnectedMessage(Map<String, dynamic> data) {
+    var sessionId = data['sessionId'];
+    if (compare(sessionId, _sessionId) == 0) {
+      var session = _sessions.remove(sessionId);
+      if (session != null) {
+        onCallStateChange?.call(session, CallState.callStateBye);
+        _closeSession(session);
+      }
+    }
+  }
+
+  void _handleSessionFailedMessage(Map<String, dynamic> data) {
+    var sessionId = data['sessionId'];
+    if (compare(sessionId, _sessionId) == 0) {
+      var session = _sessions.remove(sessionId);
+      if (session != null) {
+        onCallStateChange?.call(session, CallState.callStateBye);
+        _closeSession(session);
+      }
+    }
+  }
+
+  void _handlePostMessage(Map<String, dynamic> data) {
+    var sessionId = data['sessionId'];
+    if (compare(sessionId, _sessionId) == 0) {
+      var session = _sessions[sessionId];
+      var message = data['message'];
+      if (session != null && message != null) {
+        onRecvSignalingMessage?.call(session, message);
+      }
+    }
+  }
+
+  Future<void> _addPendingCandidates(Session session) async {
+    if (session.remoteCandidates.isNotEmpty) {
+      LogUtil.v("Signaling: Adding pending session candidates");
+      for (var candidate in session.remoteCandidates) {
+        await session.pc?.addCandidate(candidate);
+      }
+      session.remoteCandidates.clear();
+    }
+
+    if (remoteCandidates.isNotEmpty) {
+      LogUtil.v("Signaling: Adding pending global candidates");
+      for (var candidate in remoteCandidates) {
+        await session.pc?.addCandidate(candidate);
+      }
+      remoteCandidates.clear();
+    }
+  }
+
+  MediaDirection _parseAudioDirection(String? direction) {
+    if (direction == null) return MediaDirection(false, false);
+
+    switch (direction) {
+      case 'sendrecv':
+      case 'sendonly':
+      case 'true':
+        return MediaDirection(true, true);
+      case 'recvonly':
+        return MediaDirection(true, false);
+      default:
+        return MediaDirection(false, false);
+    }
+  }
+
+  MediaDirection _parseVideoDirection(String? direction) {
+    if (direction == null) return MediaDirection(false, false);
+
+    switch (direction) {
+      case 'sendrecv':
+      case 'sendonly':
+      case 'true':
+        return MediaDirection(true, true);
+      case 'recvonly':
+        return MediaDirection(true, false);
+      default:
+        return MediaDirection(false, false);
+    }
+  }
+
+  bool _parseDirection(String? direction, bool defaultValue) {
+    if (direction == null) return defaultValue;
+    return direction.toLowerCase() == 'true';
   }
 
   void connect() {
@@ -844,67 +868,50 @@ class Signaling {
     });
   }
 
-  Future<MediaStream> createLocalStream(
-      bool audio, bool video, bool datachennel) async {
-    // print(
-    //     'createLocalStream: audio = $audio  video= $video datachennel = $datachennel');
-    Map<String, dynamic> mediaConstraints = {};
-    if (audio == false && video == false && datachennel == true) {
-      mediaConstraints = {'audio': false, 'video': false};
-    } else if (audio == true &&
-        video == true &&
-        (_localAudio == true || _localVideo == true) &&
-        datachennel == true) {
-      mediaConstraints = {
-        'audio': _localAudio,
-        'video': _localVideo
+  Future<MediaStream?> createLocalStream(
+      bool audio, bool video, bool datachannel) async {
+    LogUtil.v("Signaling: Starting createLocalStream");
+    LogUtil.v(
+        "Signaling: Parameters - audio: $audio, video: $video, datachannel: $datachannel");
+
+    try {
+      final Map<String, dynamic> mediaConstraints = {
+        'audio': audio,
+        'video': video
             ? {
                 'mandatory': {
-                  'minWidth':
-                      '1280', // Provide your own width, height and frame rate here
-                  'minHeight': '720',
+                  'minWidth': '640',
+                  'minHeight': '480',
                   'minFrameRate': '30',
                 },
                 'facingMode': 'user',
                 'optional': [],
               }
-            : false
+            : false,
       };
-    } else if (audio == true &&
-        video == true &&
-        (_localAudio == true || _localVideo == true) &&
-        datachennel == false) {
-      mediaConstraints = {'audio': _localAudio, 'video': _localVideo};
-    } else if (audio == true &&
-        video == false &&
-        (_localAudio == true || _localVideo == true) &&
-        datachennel == true) {
-      mediaConstraints = {
-        'audio': _localAudio,
-        'video': _localVideo
-            ? {
-                'mandatory': {
-                  'minWidth':
-                      '1280', // Provide your own width, height and frame rate here
-                  'minHeight': '720',
-                  'minFrameRate': '30',
-                },
-                'facingMode': 'user',
-                'optional': [],
-              }
-            : false
-      };
-    } else {
-      mediaConstraints = {'audio': _localAudio, 'video': _localVideo};
-    }
 
-    MediaStream stream =
-        await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    if (stream != null) {
-      onLocalStream?.call(stream);
-    }
+      LogUtil.v("Signaling: Using media constraints: $mediaConstraints");
+      LogUtil.v("Signaling: Requesting user media...");
 
-    return stream;
+      final stream =
+          await navigator.mediaDevices.getUserMedia(mediaConstraints);
+
+      if (stream != null) {
+        LogUtil.v(
+            "Signaling: Local stream created successfully with ${stream.getTracks().length} tracks");
+        for (var track in stream.getTracks()) {
+          LogUtil.v(
+              "Signaling: Track kind: ${track.kind}, enabled: ${track.enabled}, muted: ${track.muted}");
+        }
+        return stream;
+      } else {
+        LogUtil.v("Signaling: Failed to create local stream - stream is null");
+        throw Exception("Failed to create local stream - stream is null");
+      }
+    } catch (e) {
+      LogUtil.v("Signaling: Error creating local stream: $e");
+      throw Exception("Error creating local stream: $e");
+    }
   }
 
   Future<Session> _createSession(Session? session,
@@ -913,174 +920,210 @@ class Signaling {
       required bool audio,
       required bool video,
       required bool dataChannel}) async {
-    var newSession = session ?? Session(sid: sessionId, pid: peerId);
-    newSession.audio = audio;
-    newSession.video = video;
-    newSession.datachannel = dataChannel;
-    newSession.recordState = RecordState.recordClosed;
-    if (_onlyDatachannel == false &&
-        (_localAudio == true || _localVideo == true)) {
-      _localStream = await createLocalStream(audio, video, dataChannel);
+    try {
+      LogUtil.v("Signaling: Creating new session for peer: $peerId");
+      LogUtil.v(
+          "Signaling: Session parameters - audio: $audio, video: $video, dataChannel: $dataChannel");
+
+      // Check if session already exists
+      if (_sessions.containsKey(sessionId)) {
+        LogUtil.v("Signaling: Session already exists, reusing");
+        return _sessions[sessionId]!;
+      }
+
+      var newSession = session ?? Session(sid: sessionId, pid: peerId);
+      newSession.audio = audio;
+      newSession.video = video;
+      newSession.datachannel = dataChannel;
+      newSession.recordState = RecordState.recordClosed;
+      LogUtil.v("Signaling: Session object created successfully");
+
+      // Store session immediately to prevent race conditions
+      _sessions[sessionId] = newSession;
+
+      if (_onlyDatachannel == false &&
+          (_localAudio == true || _localVideo == true)) {
+        LogUtil.v("Signaling: Creating local stream...");
+        try {
+          _localStream = await createLocalStream(audio, video, dataChannel);
+          if (_localStream == null) {
+            LogUtil.v("Signaling: Failed to create local stream");
+            throw Exception("Failed to create local stream");
+          }
+          LogUtil.v("Signaling: Local stream created successfully");
+        } catch (e) {
+          LogUtil.v("Signaling: Error creating local stream: $e");
+          // Clean up session if stream creation fails
+          _sessions.remove(sessionId);
+          throw Exception("Error creating local stream: $e");
+        }
+      } else {
+        LogUtil.v(
+            "Signaling: Skipping local stream creation - onlyDatachannel: $_onlyDatachannel, localAudio: $_localAudio, localVideo: $_localVideo");
+      }
+
+      try {
+        LogUtil.v(
+            "Signaling: Creating peer connection with ICE servers: $_iceServers");
+        LogUtil.v("Signaling: Using SDP semantics: $sdpSemantics");
+
+        RTCPeerConnection pc = await createPeerConnection({
+          ..._iceServers,
+          ...{'tcpCandidatePolicy': 'disabled'},
+          ...{'disableIpv6': true},
+          ...{'sdpSemantics': sdpSemantics}
+        }, _config);
+
+        if (pc == null) {
+          LogUtil.v("Signaling: Failed to create peer connection");
+          // Clean up session if peer connection creation fails
+          _sessions.remove(sessionId);
+          throw Exception("Failed to create peer connection");
+        }
+        LogUtil.v("Signaling: Peer connection created successfully");
+
+        if (_onlyDatachannel == false) {
+          LogUtil.v("Signaling: Setting up media tracks");
+          switch (sdpSemantics) {
+            case 'plan-b':
+              LogUtil.v("Signaling: Using Plan-B SDP semantics");
+              pc.onAddStream = (MediaStream stream) {
+                LogUtil.v("Signaling: Adding remote stream (plan-b)");
+                onAddRemoteStream?.call(newSession, stream);
+                newSession._remoteStreams.add(stream);
+              };
+              if (_localStream != null) {
+                LogUtil.v(
+                    "Signaling: Adding local stream to peer connection (plan-b)");
+                await pc.addStream(_localStream!);
+              }
+              break;
+            case 'unified-plan':
+              LogUtil.v("Signaling: Using Unified-Plan SDP semantics");
+              pc.onTrack = (event) {
+                LogUtil.v("Signaling: Adding remote track (unified-plan)");
+                onAddRemoteStream?.call(newSession, event.streams[0]);
+                newSession._remoteStreams.add(event.streams[0]);
+              };
+              if (_localStream != null) {
+                LogUtil.v(
+                    "Signaling: Adding local tracks to peer connection (unified-plan)");
+                _localStream!.getTracks().forEach((track) {
+                  pc.addTrack(track, _localStream!);
+                });
+              }
+              break;
+          }
+        }
+
+        LogUtil.v("Signaling: Setting up peer connection event handlers");
+        pc.onIceCandidate = (candidate) async {
+          if (candidate == null) {
+            LogUtil.v("Signaling: ICE gathering completed");
+            return;
+          }
+          try {
+            LogUtil.v("Signaling: Sending ICE candidate");
+            await Future.delayed(
+                const Duration(milliseconds: 10),
+                () => _send('__ice_candidate', {
+                      'sessionId': newSession.sid,
+                      'sessionType': "flutter",
+                      'messageId': RandomString.randomNumeric(32),
+                      'from': _selfId,
+                      'to': newSession.pid,
+                      "candidate": _encoder.convert({
+                        'candidate': candidate.candidate,
+                        'sdpMid': candidate.sdpMid,
+                        'sdpMLineIndex': candidate.sdpMLineIndex
+                      })
+                    }));
+          } catch (e) {
+            LogUtil.v("Signaling: Error sending ICE candidate: $e");
+          }
+        };
+
+        pc.onSignalingState = (state) {
+          LogUtil.v("Signaling: Signaling state changed: $state");
+        };
+
+        pc.onConnectionState = (state) {
+          LogUtil.v("Signaling: Connection state changed: $state");
+          onSessionRTCConnectState?.call(newSession, state);
+        };
+
+        pc.onIceGatheringState = (state) {
+          LogUtil.v("Signaling: ICE gathering state changed: $state");
+        };
+
+        pc.onIceConnectionState = (state) {
+          LogUtil.v("Signaling: ICE connection state changed: $state");
+        };
+
+        pc.onAddStream = (stream) {
+          LogUtil.v("Signaling: Remote stream added");
+          stream.getVideoTracks().forEach((videoTrack) {
+            if (_remoteVideoTrack == null) {
+              _remoteVideoTrack = videoTrack;
+              LogUtil.v("Signaling: Remote video track set");
+            }
+          });
+        };
+
+        pc.onRemoveStream = (stream) {
+          LogUtil.v("Signaling: Remote stream removed");
+          onRemoveRemoteStream?.call(newSession, stream);
+          newSession._remoteStreams.removeWhere((it) {
+            return (it.id == stream.id);
+          });
+          stream.getVideoTracks().forEach((videoTrack) {
+            if (_remoteVideoTrack == videoTrack) {
+              _remoteVideoTrack = null;
+              LogUtil.v("Signaling: Remote video track cleared");
+            }
+          });
+        };
+
+        pc.onAddTrack = (stream, track) {
+          LogUtil.v("Signaling: Remote track added: ${track.kind}");
+          if (track.kind == "video") {
+            _remoteVideoTrack = track;
+            LogUtil.v("Signaling: Remote video track set");
+          }
+        };
+
+        pc.onRemoveTrack = (stream, track) {
+          LogUtil.v("Signaling: Remote track removed: ${track.kind}");
+          if (track.kind == "video") {
+            if (_remoteVideoTrack == track) {
+              _remoteVideoTrack = null;
+              LogUtil.v("Signaling: Remote video track cleared");
+            }
+          }
+        };
+
+        pc.onDataChannel = (channel) {
+          LogUtil.v("Signaling: Data channel received");
+          _addDataChannel(newSession, channel);
+        };
+
+        newSession.pc = pc;
+        LogUtil.v("Signaling: Session created successfully");
+        return newSession;
+      } catch (e) {
+        LogUtil.v("Signaling: Error setting up peer connection: $e");
+        // Clean up session if peer connection setup fails
+        _sessions.remove(sessionId);
+        throw Exception("Error setting up peer connection: $e");
+      }
+    } catch (e) {
+      LogUtil.v("Signaling: Error creating session: $e");
+      // Clean up any partial session
+      if (_sessions.containsKey(sessionId)) {
+        _sessions.remove(sessionId);
+      }
+      throw Exception("Error creating session: $e");
     }
-    //print(_iceServers);
-    //  ...{'tcpCandidatePolicy':'disabled'},
-    //  ...{'disableIpv6':true},
-    RTCPeerConnection pc = await createPeerConnection({
-      ..._iceServers,
-      ...{'tcpCandidatePolicy': 'disabled'},
-      ...{'disableIpv6': true},
-      ...{'sdpSemantics': sdpSemantics}
-    }, _config);
-    if (_onlyDatachannel == false) {
-      switch (sdpSemantics) {
-        case 'plan-b':
-          pc.onAddStream = (MediaStream stream) {
-            onAddRemoteStream?.call(newSession, stream);
-            // print('_add remote streams ');
-            newSession._remoteStreams.add(stream);
-          };
-          if (_localStream != null) {
-            await pc.addStream(_localStream!);
-          }
-
-          break;
-        case 'unified-plan':
-          // Unified-Plan
-          pc.onTrack = (event) {
-            onAddRemoteStream?.call(newSession, event.streams[0]);
-            newSession._remoteStreams.add(event.streams[0]);
-          };
-          if (_localStream != null) {
-            _localStream!.getTracks().forEach((track) {
-              pc.addTrack(track, _localStream!);
-            });
-          }
-          break;
-      }
-
-      // Unified-Plan: Simuclast
-      /*
-      await pc.addTransceiver(
-        track: _localStream.getAudioTracks()[0],
-        init: RTCRtpTransceiverInit(
-            direction: TransceiverDirection.SendOnly, streams: [_localStream]),
-      );
-
-      await pc.addTransceiver(
-        track: _localStream.getVideoTracks()[0],
-        init: RTCRtpTransceiverInit(
-            direction: TransceiverDirection.SendOnly,
-            streams: [
-              _localStream
-            ],
-            sendEncodings: [
-              RTCRtpEncoding(rid: 'f', active: true),
-              RTCRtpEncoding(
-                rid: 'h',
-                active: true,
-                scaleResolutionDownBy: 2.0,
-                maxBitrate: 150000,
-              ),
-              RTCRtpEncoding(
-                rid: 'q',
-                active: true,
-                scaleResolutionDownBy: 4.0,
-                maxBitrate: 100000,
-              ),
-            ]),
-      );*/
-      /*
-        var sender = pc.getSenders().find(s => s.track.kind == "video");
-        var parameters = sender.getParameters();
-        if(!parameters)
-          parameters = {};
-        parameters.encodings = [
-          { rid: "h", active: true, maxBitrate: 900000 },
-          { rid: "m", active: true, maxBitrate: 300000, scaleResolutionDownBy: 2 },
-          { rid: "l", active: true, maxBitrate: 100000, scaleResolutionDownBy: 4 }
-        ];
-        sender.setParameters(parameters);
-      */
-    } else {}
-
-    pc.onIceCandidate = (candidate) async {
-      if (candidate == null) {
-        // print('onIceCandidate: complete!');
-        return;
-      }
-      var szcandidate = candidate.candidate;
-      var sdpMLineIndex = candidate.sdpMLineIndex;
-      var sdpMid = candidate.sdpMid;
-      // print(
-      //     'send candidate -------------->> sdpMLineIndex: $sdpMLineIndex sdpMid: $sdpMid candidate: $szcandidate');
-
-      // This delay is needed to allow enough time to try an ICE candidate
-      // before skipping to the next one. 1 second is just an heuristic value
-      // and should be thoroughly tested in your own environment.
-      await Future.delayed(
-          const Duration(milliseconds: 10),
-          () => _send('__ice_candidate', {
-                'sessionId': newSession.sid,
-                'sessionType': "flutter",
-                'messageId': RandomString.randomNumeric(32),
-                'from': _selfId,
-                'to': newSession.pid,
-                "candidate": _encoder.convert({
-                  'candidate': candidate.candidate,
-                  'sdpMid': candidate.sdpMid,
-                  'sdpMLineIndex': candidate.sdpMLineIndex
-                })
-              }));
-    };
-
-    pc.onSignalingState = (state) {
-      print('onSignalingState: $state');
-    };
-    pc.onConnectionState = (state) {
-      print('onConnectionState: $state');
-      onSessionRTCConnectState?.call(newSession, state);
-    };
-    pc.onIceGatheringState = (state) {
-      print('onIceGatheringState: $state');
-    };
-    pc.onIceConnectionState = (state) {
-      print('onIceConnectionState: $state');
-    };
-    pc.onAddStream = (stream) {
-      stream.getVideoTracks().forEach((videoTrack) {
-        if (_remoteVideoTrack == null) {
-          _remoteVideoTrack = videoTrack;
-        }
-      });
-    };
-    pc.onRemoveStream = (stream) {
-      onRemoveRemoteStream?.call(newSession, stream);
-      newSession._remoteStreams.removeWhere((it) {
-        return (it.id == stream.id);
-      });
-      stream.getVideoTracks().forEach((videoTrack) {
-        if (_remoteVideoTrack == videoTrack) {
-          _remoteVideoTrack = null;
-        }
-      });
-    };
-    pc.onAddTrack = (stream, track) {
-      if (track.kind == "video") {
-        _remoteVideoTrack = track;
-      }
-    };
-    pc.onRemoveTrack = (stream, track) {
-      if (track.kind == "video") {
-        if (_remoteVideoTrack == track) {
-          _remoteVideoTrack = null;
-        }
-      }
-    };
-    pc.onDataChannel = (channel) {
-      _addDataChannel(newSession, channel);
-    };
-    newSession.pc = pc;
-    return newSession;
   }
 
   void _addDataChannel(Session session, RTCDataChannel channel) {
