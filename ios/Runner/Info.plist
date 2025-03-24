@@ -1,0 +1,7 @@
+<key>NSMicrophoneUsageDescription</key>
+<string>This app needs microphone access to make audio calls</string>
+<key>UIBackgroundModes</key>
+<array>
+	<string>voip</string>
+	<string>audio</string>
+</array> 

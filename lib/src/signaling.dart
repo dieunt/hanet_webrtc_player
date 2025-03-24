@@ -873,19 +873,10 @@ class Signaling {
         "Signaling: Parameters - audio: $audio, video: $video, datachannel: $datachannel");
 
     try {
+      // Only request audio if needed, video is always false
       final Map<String, dynamic> mediaConstraints = {
         'audio': audio,
-        'video': video
-            ? {
-                'mandatory': {
-                  'minWidth': '640',
-                  'minHeight': '480',
-                  'minFrameRate': '30',
-                },
-                'facingMode': 'user',
-                'optional': [],
-              }
-            : false,
+        'video': false, // Always set video to false
       };
 
       LogUtil.v("Signaling: Using media constraints: $mediaConstraints");
@@ -893,22 +884,20 @@ class Signaling {
 
       final stream =
           await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      LogUtil.v("Signaling: Successfully got user media stream");
 
       if (stream != null) {
-        LogUtil.v(
-            "Signaling: Local stream created successfully with ${stream.getTracks().length} tracks");
-        for (var track in stream.getTracks()) {
+        LogUtil.v("Signaling: Stream tracks: ${stream.getTracks().length}");
+        stream.getTracks().forEach((track) {
           LogUtil.v(
-              "Signaling: Track kind: ${track.kind}, enabled: ${track.enabled}, muted: ${track.muted}");
-        }
-        return stream;
-      } else {
-        LogUtil.v("Signaling: Failed to create local stream - stream is null");
-        throw Exception("Failed to create local stream - stream is null");
+              "Signaling: Track kind: ${track.kind}, enabled: ${track.enabled}");
+        });
       }
+
+      return stream;
     } catch (e) {
-      LogUtil.v("Signaling: Error creating local stream: $e");
-      throw Exception("Error creating local stream: $e");
+      LogUtil.v("Signaling: Error getting user media: $e");
+      return null;
     }
   }
 
