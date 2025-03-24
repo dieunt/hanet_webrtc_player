@@ -6,12 +6,10 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart';
-import 'utils/random_string.dart';
-import 'utils/LogUtil.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'utils/utils.dart';
 import 'dart:io' show Platform;
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:hanet_webrtc_player/src/webrtc_manager.dart';
 
 /// Represents the current state of the signaling connection
 enum SignalingState {

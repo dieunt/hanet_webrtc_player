@@ -5,11 +5,8 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'signaling.dart';
-import 'utils/event_bus_util.dart';
-import 'utils/event_message.dart';
-import 'utils/random_string.dart';
 import 'utils/websocket.dart';
-import 'utils/LogUtil.dart';
+import 'utils/utils.dart';
 
 /// A class that manages WebSocket connection and WebRTC signaling
 class WebRTCManager {

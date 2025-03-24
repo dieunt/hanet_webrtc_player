@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'websocket_base.dart';
 import 'websocket_native.dart' if (dart.library.html) 'websocket_web.dart';
-import 'LogUtil.dart';
+import 'utils.dart'; // Import LogUtil từ utils
 
 class WebSocket {
   final String url;
