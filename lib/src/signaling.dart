@@ -185,10 +185,10 @@ class Signaling {
   final bool _onlyDatachannel;
 
   /// Whether local video is enabled
-  bool _localVideo;
+  bool _localVideo = false;
 
   /// Whether local audio is enabled
-  bool _localAudio = true;
+  bool _localAudio = false;
 
   /// Whether video is enabled
   bool _video = true;
@@ -428,7 +428,7 @@ class Signaling {
       bool audio,
       bool video,
       bool localaudio,
-      bool localvideo,
+      // bool localvideo,
       bool datachennel,
       String mode,
       String source,
@@ -441,7 +441,7 @@ class Signaling {
     // Update class variables with the call parameters
     _mode = mode;
     _source = source;
-    _localVideo = localvideo;
+    // _localVideo = localvideo;
     _localAudio = localaudio;
     _video = video;
     _audio = audio;
@@ -449,7 +449,8 @@ class Signaling {
 
     // Determine the direction settings for media streams
     final datachanneldir = datachennel ? 'true' : 'false';
-    final videodir = _determineVideoDirection(video, localvideo);
+    // final videodir = _determineVideoDirection(video, false);
+    final videodir = 'recvonly';
     final audiodir = _determineAudioDirection(audio, localaudio);
 
     // Send the call request with all parameters
@@ -875,7 +876,7 @@ class Signaling {
     try {
       // Only request audio if needed, video is always false
       final Map<String, dynamic> mediaConstraints = {
-        'audio': audio,
+        'audio': _localAudio,
         'video': false, // Always set video to false
       };
 

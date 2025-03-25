@@ -59,7 +59,7 @@ class WebRTCManager {
       _selfId,
       peerId,
       false, // onlyDatachannel should be false to allow media
-      true, // localVideo should be true to enable video
+      false, // localVideo should be true to enable video
     );
 
     // Set up signaling message handler BEFORE connecting
@@ -104,8 +104,8 @@ class WebRTCManager {
           peerId,
           true, // audio
           true, // video
-          true, // localAudio
-          false, // localVideo
+          false, // localAudio
+          // false, // localVideo
           true, // datachannel
           'live', // mode
           'MainStream', // source

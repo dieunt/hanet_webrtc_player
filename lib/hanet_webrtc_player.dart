@@ -18,8 +18,8 @@ class HanetWebRTCPlayer extends StatefulWidget {
 
 class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     with WidgetsBindingObserver {
-  bool _isVolumeOn = true;
-  bool _isMicOn = true;
+  bool _isVolumeOn = false;
+  bool _isMicOn = false;
   bool _isFullscreen = false;
   bool _isRecording = false;
   bool _showRemoteVideo = false;
