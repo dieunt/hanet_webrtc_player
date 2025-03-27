@@ -195,31 +195,121 @@ class Signaling {
   /// Toggle local microphone
   void muteMic(bool enabled) async {
     _localAudio = enabled; // Update the local audio state
+    LogUtil.v(
+        'Signaling: muteMic called with enabled: $enabled, _localStream: $_localStream');
 
-    if (enabled && _localStream == null) {
-      // Create new local stream if enabling and no stream exists
-      _localStream = await createLocalStream(true, false, false);
-      if (_localStream != null) {
-        // Add the local stream to all peer connections
-        _sessions.forEach((sessionId, session) async {
-          final pc = session.pc;
-          if (pc != null) {
-            _localStream!.getTracks().forEach((track) {
-              LogUtil.v('Signaling: muteMic getTracks: ${track}');
-              pc.addTrack(track, _localStream!);
+    if (enabled) {
+      if (_localStream == null) {
+        // Trường hợp 1: enabled && _localStream == null
+        // Bật micro: Tạo local stream và thêm vào peer connection
+        try {
+          _localStream = await createLocalStream(true, false, false);
+          if (_localStream != null) {
+            // Đảm bảo audio track được bật
+            _localStream!.getAudioTracks().forEach((track) {
+              track.enabled = true; // Bật track
+              LogUtil.v(
+                  'Signaling: muteMic getTracks: $track, enabled: ${track.enabled}, muted: ${track.muted}');
             });
 
-            // Create new offer to renegotiate
-            await _createOffer(session, _mode, _source);
-          }
-        });
-      }
-    }
+            // Thêm local stream vào tất cả peer connections
+            _sessions.forEach((sessionId, session) async {
+              final pc = session.pc;
+              if (pc != null) {
+                _localStream!.getTracks().forEach((track) async {
+                  await pc.addTrack(track, _localStream!);
+                });
 
-    if (_localStream != null) {
-      _localStream!.getAudioTracks().forEach((track) {
-        track.enabled = enabled;
-      });
+                // Renegotiate SDP
+                await _createOffer(session, _mode, _source);
+              }
+            });
+          } else {
+            LogUtil.v('Signaling: Failed to create local stream');
+            _localAudio = false; // Reset trạng thái nếu lỗi
+          }
+        } catch (e) {
+          LogUtil.v('Signaling: Error enabling microphone: $e');
+          _localAudio = false; // Reset trạng thái nếu lỗi
+        }
+      } else {
+        // Trường hợp 2: enabled && _localStream != null
+        // Micro đã được bật trước đó, kiểm tra và bật lại audio track nếu cần
+        try {
+          bool renegotiationNeeded = false;
+          _localStream!.getAudioTracks().forEach((track) {
+            if (!track.enabled) {
+              track.enabled = true; // Bật track
+              // track.muted = false; // Unmute track
+              renegotiationNeeded = true;
+              LogUtil.v(
+                  'Signaling: muteMic re-enabled track: $track, enabled: ${track.enabled}, muted: ${track.muted}');
+            } else {
+              LogUtil.v('Signaling: muteMic track already enabled: $track');
+            }
+          });
+
+          // Nếu có thay đổi trạng thái track, renegotiate SDP
+          if (renegotiationNeeded) {
+            _sessions.forEach((sessionId, session) async {
+              final pc = session.pc;
+              if (pc != null) {
+                // Renegotiate SDP
+                await _createOffer(session, _mode, _source);
+              }
+            });
+          } else {
+            LogUtil.v(
+                'Signaling: No renegotiation needed, audio track already active');
+          }
+        } catch (e) {
+          LogUtil.v('Signaling: Error re-enabling microphone: $e');
+        }
+      }
+    } else {
+      if (_localStream != null) {
+        // Trường hợp 3: !enabled && _localStream != null
+        // Tắt micro: Dừng và xóa local stream
+        try {
+          // Dừng tất cả audio tracks
+          _localStream!.getAudioTracks().forEach((track) {
+            track.enabled = false; // Tắt track
+            track.stop(); // Dừng track
+            LogUtil.v('Signaling: muteMic stopped track: $track');
+          });
+
+          // Xóa tracks khỏi peer connections
+          _sessions.forEach((sessionId, session) async {
+            final pc = session.pc;
+            if (pc != null) {
+              // Lấy tất cả senders và xóa audio tracks
+              final senders = await pc.getSenders();
+              for (var sender in senders) {
+                if (sender.track?.kind == 'audio') {
+                  await pc.removeTrack(sender);
+                  LogUtil.v(
+                      'Signaling: muteMic removed audio track from peer connection');
+                }
+              }
+
+              // Renegotiate SDP
+              await _createOffer(session, _mode, _source);
+            }
+          });
+
+          // Xóa local stream
+          await _localStream?.dispose();
+          _localStream = null;
+          LogUtil.v('Signaling: Local stream disposed');
+        } catch (e) {
+          LogUtil.v('Signaling: Error disabling microphone: $e');
+        }
+      } else {
+        // Trường hợp 4: !enabled && _localStream == null
+        // Micro đã tắt và không có local stream, không cần làm gì
+        LogUtil.v(
+            'Signaling: muteMic: Micro already disabled, no local stream to dispose');
+      }
     }
   }
 
@@ -558,8 +648,21 @@ class Signaling {
       var type = data['type'];
       var sdp = data['sdp'];
 
-      if (session != null && type != null && sdp != null) {
+      if (session != null &&
+          session.pc != null &&
+          type != null &&
+          sdp != null) {
+        LogUtil.v("Signaling: _handleAnswerMessage...");
         session.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
+        final remoteStreams = session.pc?.getRemoteStreams();
+        LogUtil.v("Signaling: remoteStreams: $remoteStreams");
+        if (remoteStreams != null && remoteStreams.isNotEmpty) {
+          final remoteStream = remoteStreams.first;
+          LogUtil.v("Signaling: remoteStream: $remoteStream");
+          if (remoteStream != null) {
+            onAddRemoteStream?.call(session, remoteStream);
+          }
+        }
       }
     }
   }
@@ -707,7 +810,7 @@ class Signaling {
       bool audio, bool video, bool datachannel) async {
     LogUtil.v("Signaling: Starting createLocalStream");
     LogUtil.v(
-        "Signaling: createLocalStream - audio: $audio, video: $video, datachannel: $datachannel");
+        "Signaling: createLocalStream - audio: $audio, video: $video, datachannel: $datachannel, _localAudio: $_localAudio");
 
     try {
       Map<String, dynamic> mediaConstraints = {
@@ -951,8 +1054,8 @@ class Signaling {
 
       RTCSessionDescription s =
           await session.pc!.createOffer(_onlyDatachannel ? {} : dcConstraints);
+
       await session.pc!.setLocalDescription(s);
-      // LogUtil.v("Signaling: Created offer SDP: ${s.sdp}");
 
       // Determine the direction settings for media streams
       final datachanneldir = _datachannel ? 'true' : 'false';

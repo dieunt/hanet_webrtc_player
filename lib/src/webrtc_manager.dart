@@ -87,11 +87,12 @@ class WebRTCManager {
     };
 
     _signaling?.onAddRemoteStream = (session, stream) async {
-      stream.getVideoTracks().forEach((track) {});
-      stream.getAudioTracks().forEach((track) {
-        track.enabled = false;
-      });
+      // stream.getVideoTracks().forEach((track) {});
+      // stream.getAudioTracks().forEach((track) {
+      //   track.enabled = false;
+      // });
       // _remoteStream = stream;
+      LogUtil.v('WM: Received WS message: onAddRemoteStream ${stream}');
       _remoteRenderer.srcObject = stream;
       onRemoteStream?.call(stream);
     };
