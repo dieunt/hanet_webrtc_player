@@ -83,7 +83,9 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     };
 
     _webrtcManager?.onRemoteStream = (stream) {
-      if (mounted && stream != null) setState(() => _showRemoteVideo = true);
+      if (mounted && stream != null) {
+        setState(() => _showRemoteVideo = true);
+      }
     };
 
     _webrtcManager?.onError = (error) {
@@ -95,7 +97,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _toggleVolume() {
-    if (!widget.showVolume || !widget.showVolume) return;
+    if (!widget.showVolume) return;
     setState(() {
       _isVolumeOn = !_isVolumeOn;
       _webrtcManager?.toggleVolume(_isVolumeOn);
@@ -103,7 +105,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _toggleMic() {
-    if (!widget.showMic || !widget.showMic) return;
+    if (!widget.showMic) return;
     setState(() {
       _isMicOn = !_isMicOn;
       _webrtcManager?.toggleMic(_isMicOn);

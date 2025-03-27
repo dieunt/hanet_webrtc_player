@@ -116,8 +116,8 @@ class Signaling {
   final String _sessionId; // Make it final to prevent accidental changes
   final bool _onlyDatachannel;
 
-  String _mode = '';
-  String _source = '';
+  String _mode = 'live';
+  String _source = 'SubStream';
   String _user = '';
   String _password = '';
   bool _offered = false;
@@ -194,122 +194,10 @@ class Signaling {
 
   /// Toggle local microphone
   void muteMic(bool enabled) async {
-    _localAudio = enabled; // Update the local audio state
-    LogUtil.v(
-        'Signaling: muteMic called with enabled: $enabled, _localStream: $_localStream');
-
-    if (enabled) {
-      if (_localStream == null) {
-        // Trường hợp 1: enabled && _localStream == null
-        // Bật micro: Tạo local stream và thêm vào peer connection
-        try {
-          _localStream = await createLocalStream(true, false, false);
-          if (_localStream != null) {
-            // Đảm bảo audio track được bật
-            _localStream!.getAudioTracks().forEach((track) {
-              track.enabled = true; // Bật track
-              LogUtil.v(
-                  'Signaling: muteMic getTracks: $track, enabled: ${track.enabled}, muted: ${track.muted}');
-            });
-
-            // Thêm local stream vào tất cả peer connections
-            _sessions.forEach((sessionId, session) async {
-              final pc = session.pc;
-              if (pc != null) {
-                _localStream!.getTracks().forEach((track) async {
-                  await pc.addTrack(track, _localStream!);
-                });
-
-                // Renegotiate SDP
-                await _createOffer(session, _mode, _source);
-              }
-            });
-          } else {
-            LogUtil.v('Signaling: Failed to create local stream');
-            _localAudio = false; // Reset trạng thái nếu lỗi
-          }
-        } catch (e) {
-          LogUtil.v('Signaling: Error enabling microphone: $e');
-          _localAudio = false; // Reset trạng thái nếu lỗi
-        }
-      } else {
-        // Trường hợp 2: enabled && _localStream != null
-        // Micro đã được bật trước đó, kiểm tra và bật lại audio track nếu cần
-        try {
-          bool renegotiationNeeded = false;
-          _localStream!.getAudioTracks().forEach((track) {
-            if (!track.enabled) {
-              track.enabled = true; // Bật track
-              // track.muted = false; // Unmute track
-              renegotiationNeeded = true;
-              LogUtil.v(
-                  'Signaling: muteMic re-enabled track: $track, enabled: ${track.enabled}, muted: ${track.muted}');
-            } else {
-              LogUtil.v('Signaling: muteMic track already enabled: $track');
-            }
-          });
-
-          // Nếu có thay đổi trạng thái track, renegotiate SDP
-          if (renegotiationNeeded) {
-            _sessions.forEach((sessionId, session) async {
-              final pc = session.pc;
-              if (pc != null) {
-                // Renegotiate SDP
-                await _createOffer(session, _mode, _source);
-              }
-            });
-          } else {
-            LogUtil.v(
-                'Signaling: No renegotiation needed, audio track already active');
-          }
-        } catch (e) {
-          LogUtil.v('Signaling: Error re-enabling microphone: $e');
-        }
-      }
-    } else {
-      if (_localStream != null) {
-        // Trường hợp 3: !enabled && _localStream != null
-        // Tắt micro: Dừng và xóa local stream
-        try {
-          // Dừng tất cả audio tracks
-          _localStream!.getAudioTracks().forEach((track) {
-            track.enabled = false; // Tắt track
-            track.stop(); // Dừng track
-            LogUtil.v('Signaling: muteMic stopped track: $track');
-          });
-
-          // Xóa tracks khỏi peer connections
-          _sessions.forEach((sessionId, session) async {
-            final pc = session.pc;
-            if (pc != null) {
-              // Lấy tất cả senders và xóa audio tracks
-              final senders = await pc.getSenders();
-              for (var sender in senders) {
-                if (sender.track?.kind == 'audio') {
-                  await pc.removeTrack(sender);
-                  LogUtil.v(
-                      'Signaling: muteMic removed audio track from peer connection');
-                }
-              }
-
-              // Renegotiate SDP
-              await _createOffer(session, _mode, _source);
-            }
-          });
-
-          // Xóa local stream
-          await _localStream?.dispose();
-          _localStream = null;
-          LogUtil.v('Signaling: Local stream disposed');
-        } catch (e) {
-          LogUtil.v('Signaling: Error disabling microphone: $e');
-        }
-      } else {
-        // Trường hợp 4: !enabled && _localStream == null
-        // Micro đã tắt và không có local stream, không cần làm gì
-        LogUtil.v(
-            'Signaling: muteMic: Micro already disabled, no local stream to dispose');
-      }
+    if (_localStream != null) {
+      _localStream!.getAudioTracks().forEach((track) {
+        track.enabled = enabled;
+      });
     }
   }
 
@@ -328,44 +216,104 @@ class Signaling {
   }
 
   /// Gets the first available device ID from media devices
-  Future<String> _selectSpeakerOutput() async {
-    try {
-      final devices = await navigator.mediaDevices.enumerateDevices();
-      if (devices.isEmpty) {
-        return '';
-      }
-      return devices.first.deviceId;
-    } catch (e) {
-      LogUtil.v("Signaling: Error getting device ID: $e");
-      return '';
-    }
-  }
+  // Future<String> _selectSpeakerOutput() async {
+  //   try {
+  //     final devices = await navigator.mediaDevices.enumerateDevices();
+  //     if (devices.isEmpty) {
+  //       return '';
+  //     }
+  //     LogUtil.v("Signaling: Devices: ${devices.first}");
+  //     return devices.first.deviceId;
+  //   } catch (e) {
+  //     LogUtil.v("Signaling: Error getting device ID: $e");
+  //     return '';
+  //   }
+  // }
 
-  void muteSpeekSession(String sessionId, bool enabled) async {
-    var sess = _sessions[sessionId];
-    LogUtil.v("Signaling: muteSpeekSession _sessions ${sess}");
-    if (sess != null) {
+  /// Mute or unmute the remote audio stream
+  Future<void> muteSpeak(bool enabled) async {
+    _sessions.forEach((key, sess) async {
       for (int i = 0; i < sess._remoteStreams.length; i++) {
-        LogUtil.v("Signaling: muteSpeekSession for track");
         MediaStream item = sess._remoteStreams[i];
-        LogUtil.v("Signaling: MediaStream ${item}");
-
         if (item != null) {
-          item.getAudioTracks().forEach((track) async {
+          item.getAudioTracks().forEach((track) {
             track.enabled = enabled;
-            LogUtil.v("Signaling: getAudioTracks ${track.enabled}");
-            if (enabled) {
-              final deviceId = await _selectSpeakerOutput();
-              LogUtil.v("Signaling: deviceId: $deviceId");
-              Helper.selectAudioOutput(deviceId);
-              track.enableSpeakerphone(true);
-              LogUtil.v(
-                  "Signaling: Enabled speakerphone for track: ${track.id}");
-            }
           });
         }
       }
-    }
+    });
+    // try {
+    //   var session = _sessions[sessionId];
+    //   if (session == null) {
+    //     LogUtil.v("Signaling: No session found: $sessionId");
+    //     return;
+    //   }
+
+    //   LogUtil.v(
+    //       "Signaling: Toggling audio for session: $sessionId, enabled: $enabled");
+
+    //   // Get all receivers and find audio tracks
+    //   List<RTCRtpReceiver> receivers = await session.pc!.getReceivers();
+    //   LogUtil.v("Signaling: Found ${receivers.length} receivers");
+
+    //   bool foundAudioTrack = false;
+    //   for (var receiver in receivers) {
+    //     if (receiver.track?.kind == "audio") {
+    //       foundAudioTrack = true;
+    //       receiver.track!.enabled = enabled;
+    //       LogUtil.v(
+    //           "Signaling: Toggled audio track: ${receiver.track!.id}, enabled: $enabled");
+
+    //       if (enabled) {
+    //         // Get available audio output devices
+    //         final devices = await navigator.mediaDevices.enumerateDevices();
+    //         final audioOutputs = devices
+    //             .where((device) => device.kind == 'audiooutput')
+    //             .toList();
+
+    //         if (audioOutputs.isNotEmpty) {
+    //           final deviceId = audioOutputs.first.deviceId;
+    //           LogUtil.v("Signaling: Selected audio output device: $deviceId");
+    //           Helper.selectAudioOutput(deviceId);
+    //         } else {
+    //           LogUtil.v("Signaling: No audio output devices found");
+    //         }
+    //       }
+    //     }
+    //   }
+
+    //   if (!foundAudioTrack) {
+    //     LogUtil.v("Signaling: No audio track found in receivers");
+    //     // Try to find audio tracks in remote streams as fallback
+    //     final remoteStreams = session.pc?.getRemoteStreams();
+    //     if (remoteStreams != null && remoteStreams.isNotEmpty) {
+    //       for (var stream in remoteStreams) {
+    //         if (stream != null) {
+    //           final audioTracks = stream.getAudioTracks();
+    //           if (audioTracks.isNotEmpty) {
+    //             foundAudioTrack = true;
+    //             audioTracks.forEach((track) {
+    //               track.enabled = enabled;
+    //               LogUtil.v(
+    //                   "Signaling: Toggled audio track from stream: ${track.id}, enabled: $enabled");
+    //             });
+    //             break;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+
+    //   if (!foundAudioTrack) {
+    //     LogUtil.v(
+    //         "Signaling: Still no audio track found after checking all sources");
+    //   }
+    // } catch (e) {
+    //   LogUtil.v("Signaling: Error toggling audio: $e");
+    //   if (e is Error) {
+    //     LogUtil.v("Signaling: Error stack trace: ${e.stackTrace}");
+    //   }
+    // }
   }
 
   /// Start call with given parameters
@@ -398,7 +346,7 @@ class Signaling {
     final datachanneldir = datachennel ? 'true' : 'false';
     // final videodir = _determineVideoDirection(video, false);
     final videodir = 'recvonly';
-    final audiodir = _determineAudioDirection(audio, localaudio);
+    final audiodir = localaudio ? 'sendrecv' : 'recvonly';
 
     // Send the call request with all parameters
     _send('__call', {
@@ -427,12 +375,12 @@ class Signaling {
   // }
 
   /// Determines the audio direction based on audio and local audio settings
-  String _determineAudioDirection(bool audio, bool localaudio) {
-    if (audio) {
-      return localaudio ? 'sendrecv' : 'recvonly';
-    }
-    return 'false';
-  }
+  // String _determineAudioDirection(bool audio, bool localaudio) {
+  //   if (audio) {
+  //     return localaudio ? 'sendrecv' : 'recvonly';
+  //   }
+  //   return 'recvonly';
+  // }
 
   /// Send message via signaling channel
   void postmessage(String sessionId, String message) async {
@@ -652,14 +600,26 @@ class Signaling {
           session.pc != null &&
           type != null &&
           sdp != null) {
-        LogUtil.v("Signaling: _handleAnswerMessage...");
+        LogUtil.v("Signaling: Handling answer message...");
         session.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
+
+        // Get remote streams and handle audio tracks
         final remoteStreams = session.pc?.getRemoteStreams();
-        LogUtil.v("Signaling: remoteStreams: $remoteStreams");
+        LogUtil.v(
+            "Signaling: Remote streams count: ${remoteStreams?.length ?? 0}");
+
         if (remoteStreams != null && remoteStreams.isNotEmpty) {
           final remoteStream = remoteStreams.first;
-          LogUtil.v("Signaling: remoteStream: $remoteStream");
           if (remoteStream != null) {
+            LogUtil.v(
+                "Signaling: Processing remote stream with ${remoteStream.getAudioTracks().length} audio tracks");
+
+            // Enable all audio tracks by default
+            remoteStream.getAudioTracks().forEach((track) {
+              track.enabled = true;
+              LogUtil.v("Signaling: Enabled audio track: ${track.id}");
+            });
+
             onAddRemoteStream?.call(session, remoteStream);
           }
         }
@@ -808,51 +768,25 @@ class Signaling {
 
   Future<MediaStream?> createLocalStream(
       bool audio, bool video, bool datachannel) async {
-    LogUtil.v("Signaling: Starting createLocalStream");
-    LogUtil.v(
-        "Signaling: createLocalStream - audio: $audio, video: $video, datachannel: $datachannel, _localAudio: $_localAudio");
-
     try {
       Map<String, dynamic> mediaConstraints = {
         'audio': _localAudio,
-        'video': false,
+        'video': false
       };
 
       LogUtil.v("Signaling: Using media constraints: $mediaConstraints");
-      LogUtil.v("Signaling: Requesting user media...");
+      final stream =
+          await navigator.mediaDevices.getUserMedia(mediaConstraints);
 
-      try {
-        final stream =
-            await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        LogUtil.v("Signaling: Successfully got user media stream");
-
-        if (stream != null) {
-          // LogUtil.v("Signaling: Stream tracks: ${stream.getTracks().length}");
-          // stream.getTracks().forEach((track) {
-          //   LogUtil.v(
-          //       "Signaling: Track kind: ${track.kind}, enabled: ${track.enabled}");
-          // });
-          // stream.getAudioTracks().forEach((track) {
-          //   track.enabled = false;
-          // });
-          onLocalStream?.call(stream);
-          return stream;
-        } else {
-          LogUtil.v("Signaling: Stream is null");
-          return null;
-        }
-      } catch (e) {
-        LogUtil.v("Signaling: Error getting user media: $e");
-        LogUtil.v("Signaling: Error type: ${e.runtimeType}");
-        if (e is Error) {
-          LogUtil.v("Signaling: Error stack trace: ${e.stackTrace}");
-        }
-        rethrow;
+      if (stream != null) {
+        onLocalStream?.call(stream);
+        return stream;
       }
     } catch (e) {
       LogUtil.v("Signaling: Error getting user media: $e");
-      return null;
     }
+    LogUtil.v("Signaling: Stream is null");
+    return null;
   }
 
   Future<Session> _createSession(Session? session,
@@ -861,8 +795,6 @@ class Signaling {
       required bool audio,
       required bool video,
       required bool dataChannel}) async {
-    LogUtil.v(
-        "Signaling: Creating new session for peer: $peerId - audio: $audio, video: $video, dataChannel: $dataChannel");
     // Check if session already exists
     if (_sessions.containsKey(sessionId)) {
       LogUtil.v("Signaling: Session already exists, reusing");
@@ -903,6 +835,7 @@ class Signaling {
               onAddRemoteStream?.call(newSession, stream);
               newSession._remoteStreams.add(stream);
             };
+
             if (_localStream != null) {
               LogUtil.v("Signaling: Adding local stream to peer (plan-b)");
               await pc.addStream(_localStream!);
@@ -931,6 +864,7 @@ class Signaling {
           LogUtil.v("Signaling: ICE gathering completed");
           return;
         }
+
         LogUtil.v("Signaling: Sending ICE candidate");
         await Future.delayed(
             const Duration(milliseconds: 10),
@@ -1060,7 +994,7 @@ class Signaling {
       // Determine the direction settings for media streams
       final datachanneldir = _datachannel ? 'true' : 'false';
       final videodir = 'recvonly';
-      final audiodir = _determineAudioDirection(_audio, _localAudio);
+      final audiodir = _localAudio ? 'sendrecv' : 'recvonly';
 
       _send('__offer', {
         'sessionId': session.sid,

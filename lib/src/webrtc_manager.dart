@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
+// import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:uuid/uuid.dart';
 import 'signaling.dart';
@@ -34,15 +34,14 @@ class WebRTCManager {
   Function(String)? onError;
 
   /// Creates a new WebRTCManager instance
-  WebRTCManager({
-    required String peerId,
-    String source = "SubStream",
-  }) {
+  WebRTCManager({required String peerId, String source = "SubStream"}) {
+    LogUtil.init(title: "webrtc", isDebug: true, limitLength: 800);
+
     _selfId = Uuid().v4();
     _peerId = peerId;
     _source = source;
     _initializeRenderers().then((_) {
-      _initializeSignaling(peerId);
+      _initializeSignaling(_peerId);
       _initializeWebSocket();
     });
   }
@@ -55,8 +54,6 @@ class WebRTCManager {
 
   void _initializeSignaling(String peerId) {
     _signaling = Signaling(_selfId, peerId, _sessionId, false, false);
-
-    // Set up signaling message handler BEFORE connecting
     _signaling?.onSendSignalMessage = (event, data) => _send(event, data);
 
     // Handle session creation
@@ -68,7 +65,7 @@ class WebRTCManager {
           peerId,
           true, // audio
           true, // video
-          false, // localAudio
+          true, // localAudio
           false, // localVideo
           true, // datachannel
           'live', // mode
@@ -82,7 +79,7 @@ class WebRTCManager {
     // Set up callbacks
     _signaling?.onLocalStream = (stream) {
       stream.getAudioTracks().forEach((track) {
-        track.enabled = false;
+        track.enabled = false; // Disable local audio by default
       });
       // _localStream = stream;
       _localRenderer.srcObject = stream;
@@ -90,12 +87,11 @@ class WebRTCManager {
     };
 
     _signaling?.onAddRemoteStream = (session, stream) async {
-      // stream.getVideoTracks().forEach((track) {});
-      // stream.getAudioTracks().forEach((track) {
-      //   track.enabled = false;
-      // });
-      // _remoteStream = stream;
-      LogUtil.v('WM: Received WS message: onAddRemoteStream ${stream}');
+      stream.getAudioTracks().forEach((track) {
+        track.enabled = false;
+        track.enableSpeakerphone(true);
+      });
+
       _remoteRenderer.srcObject = stream;
       onRemoteStream?.call(stream);
     };
@@ -112,12 +108,6 @@ class WebRTCManager {
   }
 
   void _initializeWebSocket() {
-    LogUtil.init(title: "webrtc", isDebug: true, limitLength: 800);
-    // Connect to WebSocket
-    _connectWebSocket();
-  }
-
-  void _connectWebSocket() {
     _socket = WebSocket(_serverUrl + _selfId);
 
     _socket?.onMessage = (message) => _handleWebSocketMessage(message);
@@ -138,37 +128,24 @@ class WebRTCManager {
   }
 
   void _handleWebSocketMessage(dynamic message) {
-    try {
-      if (_signaling != null) {
-        LogUtil.v('WM: Received WS message: ${message}');
-        _signaling!.onMessage(message);
-      }
-    } catch (e) {
-      onError?.call('Error handling message: $e');
+    if (_signaling != null) {
+      LogUtil.v('WM: Received WS message: ${message}');
+      _signaling!.onMessage(message);
     }
   }
 
   void _send(String event, dynamic data) {
-    try {
-      if (_socket != null && _isWebSocketConnected) {
-        final message = jsonEncode({'eventName': event, 'data': data});
-        LogUtil.v('WM: Sending WS message: $message');
-
-        _socket!.send(message);
-      } else {
-        LogUtil.v('WM: WebSocket not connected');
-        onError?.call('WM: WebSocket not connected');
-      }
-    } catch (e) {
-      LogUtil.v('WM: Error sending message: $e');
-      onError?.call('WM: Error sending message: $e');
+    if (_socket != null && _isWebSocketConnected) {
+      final message = jsonEncode({'eventName': event, 'data': data});
+      LogUtil.v('WM: Sending WS message: $message');
+      _socket!.send(message);
     }
   }
 
-  /// Toggle volume for the remote stream
-  void toggleVolume(bool enabled) {
+  /// Toggle volume for remote audio tracks
+  Future<void> toggleVolume(bool enabled) async {
     if (_signaling != null) {
-      _signaling!.muteSpeekSession(_sessionId!, enabled);
+      await _signaling!.muteSpeak(enabled);
     }
   }
 
@@ -181,21 +158,21 @@ class WebRTCManager {
 
   /// Start recording the remote stream
   Future<void> startRecording() async {
-    if (_signaling != null && _sessionId != null) {
+    if (_signaling != null) {
       await _signaling!.startRecord(_sessionId!);
     }
   }
 
   /// Stop recording the remote stream
   Future<void> stopRecording() async {
-    if (_signaling != null && _sessionId != null) {
+    if (_signaling != null) {
       await _signaling!.stopRecord(_sessionId!);
     }
   }
 
   /// Capture a frame from the remote stream
   Future<void> captureFrame() async {
-    if (_signaling != null && _sessionId != null) {
+    if (_signaling != null) {
       await _signaling!.captureFrame(_sessionId!);
     }
   }
