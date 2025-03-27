@@ -1,0 +1,23 @@
+name: hanet_webrtc_player_example
+description: Example app for hanet_webrtc_player package
+publish_to: 'none'
+
+version: 0.0.1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  hanet_webrtc_player:
+    path: ..
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true 
