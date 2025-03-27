@@ -11,15 +11,17 @@ class HanetWebRTCPlayer extends StatefulWidget {
   final bool showCapture;
   final bool showRecord;
   final bool showFullscreen;
+  final String source;
 
   const HanetWebRTCPlayer({
     super.key,
     required this.peerId,
-    this.showVolume = true,
-    this.showMic = true,
-    this.showCapture = true,
-    this.showRecord = true,
-    this.showFullscreen = true,
+    this.showVolume = false,
+    this.showMic = false,
+    this.showCapture = false,
+    this.showRecord = false,
+    this.showFullscreen = false,
+    this.source = "SubStream",
   });
 
   @override
@@ -71,7 +73,10 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _initializeWebRTC() {
-    _webrtcManager = WebRTCManager(peerId: widget.peerId);
+    _webrtcManager = WebRTCManager(
+      peerId: widget.peerId,
+      source: widget.source,
+    );
 
     _webrtcManager?.onRecordingStateChanged = (isRecording) {
       if (mounted) setState(() => _isRecording = isRecording);

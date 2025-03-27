@@ -13,6 +13,7 @@ class WebRTCManager {
   final String _serverUrl = "https://webrtc-stream.hanet.ai/wswebclient/";
   String _selfId = "";
   String _peerId = "";
+  String _source = "SubStream";
   WebSocket? _socket;
   var _delSessionMsgEvent;
   var _newSessionMsgEvent;
@@ -35,9 +36,11 @@ class WebRTCManager {
   /// Creates a new WebRTCManager instance
   WebRTCManager({
     required String peerId,
+    String source = "SubStream",
   }) {
     _selfId = Uuid().v4();
     _peerId = peerId;
+    _source = source;
     _initializeRenderers().then((_) {
       _initializeSignaling(peerId);
       _initializeWebSocket();
@@ -69,7 +72,7 @@ class WebRTCManager {
           false, // localVideo
           true, // datachannel
           'live', // mode
-          'SubStream', // source
+          _source, // source
           'admin', // user
           '123456', // password
         );
