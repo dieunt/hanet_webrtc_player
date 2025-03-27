@@ -3,83 +3,83 @@ import 'dart:math';
 import 'package:event_bus/event_bus.dart';
 
 // --- EventBusMessage ---
-class ReciveMsgEvent {
-  final String _msg;
-  ReciveMsgEvent(this._msg);
+// class ReciveMsgEvent {
+//   final String _msg;
+//   ReciveMsgEvent(this._msg);
 
-  String get msg {
-    return _msg;
-  }
-}
+//   String get msg {
+//     return _msg;
+//   }
+// }
 
-class DeleteSessionMsgEvent {
-  final String _msg;
-  DeleteSessionMsgEvent(this._msg);
+// class DeleteSessionMsgEvent {
+//   final String _msg;
+//   DeleteSessionMsgEvent(this._msg);
 
-  String get msg {
-    return _msg;
-  }
-}
+//   String get msg {
+//     return _msg;
+//   }
+// }
 
-class NewSessionMsgEvent {
-  final String _msg;
-  NewSessionMsgEvent(this._msg);
+// class NewSessionMsgEvent {
+//   final String _msg;
+//   NewSessionMsgEvent(this._msg);
 
-  String get msg {
-    return _msg;
-  }
-}
+//   String get msg {
+//     return _msg;
+//   }
+// }
 
-class SendMsgEvent {
-  final String _event;
-  final Map _data;
-  SendMsgEvent(this._event, this._data);
+// class SendMsgEvent {
+//   final String _event;
+//   final Map _data;
+//   SendMsgEvent(this._event, this._data);
 
-  String get event {
-    return _event;
-  }
+//   String get event {
+//     return _event;
+//   }
 
-  Map get data {
-    return _data;
-  }
-}
+//   Map get data {
+//     return _data;
+//   }
+// }
 
-// --- EventBusUtils ---
-typedef EventCallback<T> = void Function(T event);
+// // --- EventBusUtils ---
+// typedef EventCallback<T> = void Function(T event);
 
-class EventBusUtils {
-  EventBusUtils._internal() {
-    _eventBus = EventBus();
-  }
+// class EventBusUtils {
+//   EventBusUtils._internal() {
+//     _eventBus = EventBus();
+//   }
 
-  static EventBusUtils get instance => _getInstance();
+//   static EventBusUtils get instance => _getInstance();
 
-  static late EventBusUtils _instance;
-  static bool _isInstanceCreated = false;
-  late final EventBus _eventBus;
+//   static late EventBusUtils _instance;
+//   static bool _isInstanceCreated = false;
+//   late final EventBus _eventBus;
 
-  static EventBusUtils _getInstance() {
-    if (!_isInstanceCreated) {
-      _instance = EventBusUtils._internal();
-      _isInstanceCreated = true;
-    }
-    return _instance;
-  }
+//   static EventBusUtils _getInstance() {
+//     if (!_isInstanceCreated) {
+//       _instance = EventBusUtils._internal();
+//       _isInstanceCreated = true;
+//     }
+//     return _instance;
+//   }
 
-  StreamSubscription<T> on<T>(EventCallback<T> callback) {
-    return _eventBus.on<T>().listen(callback);
-  }
+//   StreamSubscription<T> on<T>(EventCallback<T> callback) {
+//     return _eventBus.on<T>().listen(callback);
+//   }
 
-  void emit<T>(T event) {
-    _eventBus.fire(event);
-  }
+//   void emit<T>(T event) {
+//     _eventBus.fire(event);
+//   }
 
-  void off(StreamSubscription subscription) {
-    subscription.cancel();
-  }
-}
+//   void off(StreamSubscription subscription) {
+//     subscription.cancel();
+//   }
+// }
 
-final eventBus = EventBusUtils.instance;
+// final eventBus = EventBusUtils.instance;
 
 // --- LogUtil --- (từ log_util.dart)
 class LogUtil {

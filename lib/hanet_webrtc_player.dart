@@ -124,7 +124,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    // final size = MediaQuery.of(context).size;
     final isLandscape = _isFullscreen;
 
     return PopScope(

@@ -116,6 +116,12 @@
       "languageVersion": "3.2"
     },
     {
+      "name": "image_gallery_saver",
+      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/image_gallery_saver-2.0.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "js",
       "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/js-0.7.2",
       "packageUri": "lib/",
@@ -410,7 +416,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-03-24T15:33:37.699914Z",
+  "generated": "2025-03-26T16:41:14.633337Z",
   "generator": "pub",
   "generatorVersion": "3.7.0",
   "flutterRoot": "file:///Users/hanet/flutter",

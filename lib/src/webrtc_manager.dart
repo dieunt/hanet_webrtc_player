@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'signaling.dart';
 import 'utils/websocket.dart';
 import 'utils/utils.dart';
@@ -17,17 +16,15 @@ class WebRTCManager {
   WebSocket? _socket;
   var _delSessionMsgEvent;
   var _newSessionMsgEvent;
-  Map<String, String> _sessions = {};
-  late SharedPreferences _prefs;
   bool _isWebSocketConnected = false;
 
   // WebRTC state
   Signaling? _signaling;
   final _localRenderer = RTCVideoRenderer();
   final _remoteRenderer = RTCVideoRenderer();
-  MediaStream? _localStream;
-  MediaStream? _remoteStream;
-  String? _sessionId;
+  // MediaStream? _localStream;
+  // MediaStream? _remoteStream;
+  String _sessionId = RandomString.randomNumeric(32);
 
   // Callbacks
   Function(MediaStream?)? onLocalStream;
@@ -39,7 +36,6 @@ class WebRTCManager {
   WebRTCManager({
     required String peerId,
   }) {
-    _sessionId = RandomString.randomNumeric(32);
     _selfId = Uuid().v4();
     _peerId = peerId;
     _initializeRenderers().then((_) {
@@ -55,103 +51,84 @@ class WebRTCManager {
   }
 
   void _initializeSignaling(String peerId) {
-    _signaling = Signaling(
-      _selfId,
-      peerId,
-      false, // onlyDatachannel should be false to allow media
-      false, // localVideo should be true to enable video
-    );
+    _signaling = Signaling(_selfId, peerId, _sessionId, false, false);
 
     // Set up signaling message handler BEFORE connecting
-    _signaling?.onSendSignalMessage = (event, data) {
-      _send(event, data);
-    };
-
-    // Set up callbacks
-    _signaling?.onLocalStream = (stream) {
-      LogUtil.v(
-          "WM: Local stream received with ${stream.getTracks().length} tracks");
-      _localRenderer.srcObject = stream;
-      _localStream = stream;
-      onLocalStream?.call(stream);
-    };
-
-    _signaling?.onAddRemoteStream = (session, stream) {
-      LogUtil.v(
-          "WM: Remote stream received with ${stream.getTracks().length} tracks");
-      _remoteRenderer.srcObject = stream;
-      _remoteStream = stream;
-      onRemoteStream?.call(stream);
-    };
-
-    _signaling?.onRemoveRemoteStream = (session, stream) {
-      LogUtil.v("WM: Remote stream removed");
-      _remoteRenderer.srcObject = null;
-      _remoteStream = null;
-      onRemoteStream?.call(null);
-    };
-
-    _signaling?.onRecordState = (session, state) {
-      onRecordingStateChanged?.call(state == RecordState.recording);
-    };
+    _signaling?.onSendSignalMessage = (event, data) => _send(event, data);
 
     // Handle session creation
     _signaling?.onSessionCreate = (sessionId, peerId, state) {
       LogUtil.v('WM: Session created with state: $state');
-      if (state == OnlineState.online) {
+      if (state == OnlineState.online && peerId != _selfId) {
         _signaling?.startcall(
           sessionId,
           peerId,
           true, // audio
           true, // video
           false, // localAudio
-          // false, // localVideo
+          false, // localVideo
           true, // datachannel
           'live', // mode
-          'MainStream', // source
+          'SubStream', // source
           'admin', // user
           '123456', // password
         );
       }
     };
+
+    // Set up callbacks
+    _signaling?.onLocalStream = (stream) {
+      stream.getAudioTracks().forEach((track) {
+        track.enabled = false;
+      });
+      // _localStream = stream;
+      _localRenderer.srcObject = stream;
+      onLocalStream?.call(stream);
+    };
+
+    _signaling?.onAddRemoteStream = (session, stream) async {
+      stream.getVideoTracks().forEach((track) {});
+      stream.getAudioTracks().forEach((track) {
+        track.enabled = false;
+      });
+      // _remoteStream = stream;
+      _remoteRenderer.srcObject = stream;
+      onRemoteStream?.call(stream);
+    };
+
+    _signaling?.onRemoveRemoteStream = (session, stream) {
+      // _remoteStream = null;
+      _remoteRenderer.srcObject = null;
+      onRemoteStream?.call(null);
+    };
+
+    _signaling?.onRecordState = (session, state) {
+      onRecordingStateChanged?.call(state == RecordState.recording);
+    };
   }
 
   void _initializeWebSocket() {
     LogUtil.init(title: "webrtc", isDebug: true, limitLength: 800);
-
-    // Set up event bus listeners
-    _delSessionMsgEvent = eventBus.on<DeleteSessionMsgEvent>((event) {
-      var session = _sessions.remove(event.msg);
-      if (session != null) {
-        LogUtil.v('WM: remove session $session');
-      }
-    });
-
-    _newSessionMsgEvent = eventBus.on<NewSessionMsgEvent>((event) {
-      _sessions[event.msg] = event.msg;
-    });
-
     // Connect to WebSocket
     _connectWebSocket();
   }
 
   void _connectWebSocket() {
-    LogUtil.v('WM: Connecting to WebSocket server...');
     _socket = WebSocket(_serverUrl + (kIsWeb ? _peerId : _selfId));
-    _socket?.onMessage = (message) {
-      _handleWebSocketMessage(message);
-    };
+
+    _socket?.onMessage = (message) => _handleWebSocketMessage(message);
+
     _socket?.onOpen = () {
       LogUtil.v('WM: WebSocket connected');
       _isWebSocketConnected = true;
-      // Now that WebSocket is connected, we can start signaling
       _signaling?.connect();
     };
+
     _socket?.onClose = (code, reason) {
-      LogUtil.v('WM: WebSocket closed: $code - $reason');
       _isWebSocketConnected = false;
       onError?.call('WebSocket connection closed: $reason');
     };
+
     // Connect to the WebSocket server
     _socket?.connect();
   }
@@ -159,19 +136,10 @@ class WebRTCManager {
   void _handleWebSocketMessage(dynamic message) {
     try {
       if (_signaling != null) {
-        // Log the received message in a formatted way
-        try {
-          final jsonMessage = jsonDecode(message);
-          LogUtil.v(
-              'WM: Received WebSocket message: ${jsonEncode(jsonMessage)}');
-        } catch (e) {
-          // If it's not JSON, log the raw message
-          LogUtil.v('WM: Received WebSocket message (raw): $message');
-        }
+        LogUtil.v('WM: Received WS message: ${message}');
         _signaling!.onMessage(message);
       }
     } catch (e) {
-      LogUtil.v('WM: Error handling WebSocket message: $e');
       onError?.call('Error handling message: $e');
     }
   }
@@ -179,11 +147,9 @@ class WebRTCManager {
   void _send(String event, dynamic data) {
     try {
       if (_socket != null && _isWebSocketConnected) {
-        final message = jsonEncode({
-          'eventName': event,
-          'data': data,
-        });
-        LogUtil.v('WM: Sending WebSocket message: $message');
+        final message = jsonEncode({'eventName': event, 'data': data});
+        LogUtil.v('WM: Sending WS message: $message');
+
         _socket!.send(message);
       } else {
         LogUtil.v('WM: WebSocket not connected');
@@ -197,8 +163,8 @@ class WebRTCManager {
 
   /// Toggle volume for the remote stream
   void toggleVolume(bool enabled) {
-    if (_signaling != null && _sessionId != null) {
-      _signaling!.muteSpeekSession(_sessionId!, !enabled);
+    if (_signaling != null) {
+      _signaling!.muteSpeekSession(_sessionId!, enabled);
     }
   }
 
