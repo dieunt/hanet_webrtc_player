@@ -6,10 +6,20 @@ import 'src/webrtc_manager.dart';
 
 class HanetWebRTCPlayer extends StatefulWidget {
   final String peerId;
+  final bool showVolume;
+  final bool showMic;
+  final bool showCapture;
+  final bool showRecord;
+  final bool showFullscreen;
 
   const HanetWebRTCPlayer({
     super.key,
     required this.peerId,
+    this.showVolume = true,
+    this.showMic = true,
+    this.showCapture = true,
+    this.showRecord = true,
+    this.showFullscreen = true,
   });
 
   @override
@@ -80,6 +90,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _toggleVolume() {
+    if (!widget.showVolume || !widget.showVolume) return;
     setState(() {
       _isVolumeOn = !_isVolumeOn;
       _webrtcManager?.toggleVolume(_isVolumeOn);
@@ -87,6 +98,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _toggleMic() {
+    if (!widget.showMic || !widget.showMic) return;
     setState(() {
       _isMicOn = !_isMicOn;
       _webrtcManager?.toggleMic(_isMicOn);
@@ -94,33 +106,38 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   Future<void> _toggleFullscreen() async {
-    if (kIsWeb) return; // Không làm gì trên Web
-
+    if (kIsWeb || !widget.showFullscreen) return;
     setState(() {
       _isFullscreen = !_isFullscreen;
+      if (_isFullscreen) {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+        SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.immersiveSticky,
+          overlays: [],
+        );
+      } else {
+        _resetOrientation();
+      }
     });
-
-    if (_isFullscreen) {
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    } else {
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-      ]);
-      await SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: SystemUiOverlay.values,
-      );
-    }
   }
 
-  Future<void> _startRecording() async =>
-      await _webrtcManager?.startRecording();
-  Future<void> _stopRecording() async => await _webrtcManager?.stopRecording();
-  Future<void> _captureFrame() async => await _webrtcManager?.captureFrame();
+  Future<void> _startRecording() async {
+    if (!widget.showRecord) return;
+    await _webrtcManager?.startRecording();
+  }
+
+  Future<void> _stopRecording() async {
+    if (!widget.showRecord) return;
+    await _webrtcManager?.stopRecording();
+  }
+
+  Future<void> _captureFrame() async {
+    if (!widget.showCapture) return;
+    await _webrtcManager?.captureFrame();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -174,63 +191,48 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints.tight(
-                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
-                        icon: Icon(
-                          _isVolumeOn ? Icons.volume_up : Icons.volume_off,
-                          color: Colors.white,
-                          size: isLandscape ? 32 : 24,
-                        ),
-                        onPressed: _toggleVolume,
-                      ),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints.tight(
-                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
-                        icon: Icon(
-                          _isMicOn ? Icons.mic : Icons.mic_off,
-                          color: Colors.white,
-                          size: isLandscape ? 32 : 24,
-                        ),
-                        onPressed: _toggleMic,
-                      ),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints.tight(
-                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
-                        icon: Icon(
-                          _isRecording ? Icons.stop : Icons.fiber_manual_record,
-                          color: _isRecording ? Colors.red : Colors.white,
-                          size: isLandscape ? 32 : 24,
-                        ),
-                        onPressed:
-                            _isRecording ? _stopRecording : _startRecording,
-                      ),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints.tight(
-                            Size(isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
-                        icon: Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: isLandscape ? 32 : 24,
-                        ),
-                        onPressed: _captureFrame,
-                      ),
-                      // Chỉ hiển thị nút fullscreen trên Mobile
-                      if (!kIsWeb)
+                      if (widget.showVolume)
                         IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: BoxConstraints.tight(Size(
-                              isLandscape ? 48 : 40, isLandscape ? 48 : 40)),
+                          icon: Icon(
+                            _isVolumeOn ? Icons.volume_up : Icons.volume_off,
+                            color: Colors.white,
+                          ),
+                          onPressed: widget.showVolume ? _toggleVolume : null,
+                        ),
+                      if (widget.showMic)
+                        IconButton(
+                          icon: Icon(
+                            _isMicOn ? Icons.mic : Icons.mic_off,
+                            color: Colors.white,
+                          ),
+                          onPressed: widget.showMic ? _toggleMic : null,
+                        ),
+                      if (widget.showCapture)
+                        IconButton(
+                          icon: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                          ),
+                          onPressed: _captureFrame,
+                        ),
+                      if (widget.showRecord)
+                        IconButton(
+                          icon: Icon(
+                            _isRecording
+                                ? Icons.stop
+                                : Icons.fiber_manual_record,
+                            color: _isRecording ? Colors.red : Colors.white,
+                          ),
+                          onPressed:
+                              _isRecording ? _stopRecording : _startRecording,
+                        ),
+                      if (widget.showFullscreen && !kIsWeb)
+                        IconButton(
                           icon: Icon(
                             _isFullscreen
                                 ? Icons.fullscreen_exit
                                 : Icons.fullscreen,
                             color: Colors.white,
-                            size: isLandscape ? 32 : 24,
                           ),
                           onPressed: _toggleFullscreen,
                         ),
