@@ -799,7 +799,7 @@ class Signaling {
     LogUtil.v("Signaling: WebSocket connected");
     _send('__connectto', {
       'sessionId': _sessionId,
-      'sessionType': "flutter",
+      'sessionType': kIsWeb ? 'IE' : "flutter",
       'messageId': RandomString.randomNumeric(32),
       'from': _selfId,
       'to': _peerId

@@ -115,7 +115,7 @@ class WebRTCManager {
   }
 
   void _connectWebSocket() {
-    _socket = WebSocket(_serverUrl + (kIsWeb ? _peerId : _selfId));
+    _socket = WebSocket(_serverUrl + _selfId);
 
     _socket?.onMessage = (message) => _handleWebSocketMessage(message);
 
