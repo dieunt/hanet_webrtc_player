@@ -121,10 +121,10 @@ class Signaling {
   String _user = '';
   String _password = '';
   bool _offered = false;
-  bool _localVideo = true;
-  bool _localAudio = true;
-  bool _video = true;
-  bool _audio = true;
+  bool _localVideo = false;
+  bool _localAudio = false;
+  bool _video = false;
+  bool _audio = false;
   bool _datachannel = true;
   MediaStream? _localStream;
   MediaStreamTrack? _remoteVideoTrack;
@@ -193,127 +193,57 @@ class Signaling {
   }
 
   /// Toggle local microphone
-  void muteMic(bool enabled) async {
+  Future<void> muteMic(String sessionId, bool enabled) async {
+    _localAudio = enabled;
+
     if (_localStream != null) {
       _localStream!.getAudioTracks().forEach((track) {
         track.enabled = enabled;
       });
     }
-  }
 
-  /// Toggle remote audio playback
-  void muteAllSpeek(bool enabled) {
-    _sessions.forEach((key, sess) async {
-      for (int i = 0; i < sess._remoteStreams.length; i++) {
-        MediaStream item = sess._remoteStreams[i];
-        if (item != null) {
-          item.getAudioTracks().forEach((track) {
-            track.enabled = enabled;
-          });
-        }
-      }
-    });
-  }
-
-  /// Gets the first available device ID from media devices
-  // Future<String> _selectSpeakerOutput() async {
-  //   try {
-  //     final devices = await navigator.mediaDevices.enumerateDevices();
-  //     if (devices.isEmpty) {
-  //       return '';
-  //     }
-  //     LogUtil.v("Signaling: Devices: ${devices.first}");
-  //     return devices.first.deviceId;
-  //   } catch (e) {
-  //     LogUtil.v("Signaling: Error getting device ID: $e");
-  //     return '';
-  //   }
-  // }
-
-  /// Mute or unmute the remote audio stream
-  Future<void> muteSpeak(bool enabled) async {
-    _sessions.forEach((key, sess) async {
-      for (int i = 0; i < sess._remoteStreams.length; i++) {
-        MediaStream item = sess._remoteStreams[i];
-        if (item != null) {
-          item.getAudioTracks().forEach((track) {
-            track.enabled = enabled;
-          });
-        }
-      }
-    });
-    // try {
+    // if (enabled && _localStream == null) {
     //   var session = _sessions[sessionId];
-    //   if (session == null) {
-    //     LogUtil.v("Signaling: No session found: $sessionId");
-    //     return;
-    //   }
-
-    //   LogUtil.v(
-    //       "Signaling: Toggling audio for session: $sessionId, enabled: $enabled");
-
-    //   // Get all receivers and find audio tracks
-    //   List<RTCRtpReceiver> receivers = await session.pc!.getReceivers();
-    //   LogUtil.v("Signaling: Found ${receivers.length} receivers");
-
-    //   bool foundAudioTrack = false;
-    //   for (var receiver in receivers) {
-    //     if (receiver.track?.kind == "audio") {
-    //       foundAudioTrack = true;
-    //       receiver.track!.enabled = enabled;
-    //       LogUtil.v(
-    //           "Signaling: Toggled audio track: ${receiver.track!.id}, enabled: $enabled");
-
-    //       if (enabled) {
-    //         // Get available audio output devices
-    //         final devices = await navigator.mediaDevices.enumerateDevices();
-    //         final audioOutputs = devices
-    //             .where((device) => device.kind == 'audiooutput')
-    //             .toList();
-
-    //         if (audioOutputs.isNotEmpty) {
-    //           final deviceId = audioOutputs.first.deviceId;
-    //           LogUtil.v("Signaling: Selected audio output device: $deviceId");
-    //           Helper.selectAudioOutput(deviceId);
-    //         } else {
-    //           LogUtil.v("Signaling: No audio output devices found");
-    //         }
-    //       }
+    //   if (session != null) {
+    //     RTCPeerConnection? pc = session.pc;
+    //     if (pc == null) {
+    //       return;
     //     }
-    //   }
 
-    //   if (!foundAudioTrack) {
-    //     LogUtil.v("Signaling: No audio track found in receivers");
-    //     // Try to find audio tracks in remote streams as fallback
-    //     final remoteStreams = session.pc?.getRemoteStreams();
-    //     if (remoteStreams != null && remoteStreams.isNotEmpty) {
-    //       for (var stream in remoteStreams) {
-    //         if (stream != null) {
-    //           final audioTracks = stream.getAudioTracks();
-    //           if (audioTracks.isNotEmpty) {
-    //             foundAudioTrack = true;
-    //             audioTracks.forEach((track) {
-    //               track.enabled = enabled;
-    //               LogUtil.v(
-    //                   "Signaling: Toggled audio track from stream: ${track.id}, enabled: $enabled");
-    //             });
-    //             break;
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
+    //     _localStream = await createLocalStream(_audio, _datachannel);
+    //     _localStream!.getTracks().forEach((track) async {
+    //       await pc.addTrack(track, _localStream!);
+    //     });
 
-    //   if (!foundAudioTrack) {
-    //     LogUtil.v(
-    //         "Signaling: Still no audio track found after checking all sources");
-    //   }
-    // } catch (e) {
-    //   LogUtil.v("Signaling: Error toggling audio: $e");
-    //   if (e is Error) {
-    //     LogUtil.v("Signaling: Error stack trace: ${e.stackTrace}");
+    //     _localStream!.getAudioTracks().forEach((track) {
+    //       track.enabled = true;
+    //     });
+
+    //     var newSession = await _createSession(null,
+    //         peerId: _peerId,
+    //         sessionId: RandomString.randomString(32),
+    //         audio: true,
+    //         video: false,
+    //         dataChannel: _datachannel);
+
+    //     _sessions[sessionId] = newSession;
+    //     await _createOffer(newSession, _mode, _source);
     //   }
     // }
+  }
+
+  /// Mute or unmute the remote audio stream
+  void muteSpeak(bool enabled) async {
+    _sessions.forEach((key, sess) async {
+      for (int i = 0; i < sess._remoteStreams.length; i++) {
+        MediaStream item = sess._remoteStreams[i];
+        if (item != null) {
+          item.getAudioTracks().forEach((track) {
+            track.enabled = enabled;
+          });
+        }
+      }
+    });
   }
 
   /// Start call with given parameters
@@ -324,7 +254,7 @@ class Signaling {
       bool video,
       bool localaudio,
       bool localvideo,
-      bool datachennel,
+      bool datachannel,
       String mode,
       String source,
       String user,
@@ -340,10 +270,10 @@ class Signaling {
     _localAudio = localaudio;
     _video = video;
     _audio = audio;
-    _datachannel = datachennel;
+    _datachannel = datachannel;
 
     // Determine the direction settings for media streams
-    final datachanneldir = datachennel ? 'true' : 'false';
+    final datachanneldir = datachannel ? 'true' : 'false';
     // final videodir = _determineVideoDirection(video, false);
     final videodir = 'recvonly';
     final audiodir = localaudio ? 'sendrecv' : 'recvonly';
@@ -365,22 +295,6 @@ class Signaling {
       "iceservers": _encoder.convert(_iceServers)
     });
   }
-
-  /// Determines the video direction based on video and local video settings
-  // String _determineVideoDirection(bool video, bool localvideo) {
-  //   if (video) {
-  //     return localvideo ? 'sendrecv' : 'recvonly';
-  //   }
-  //   return 'false';
-  // }
-
-  /// Determines the audio direction based on audio and local audio settings
-  // String _determineAudioDirection(bool audio, bool localaudio) {
-  //   if (audio) {
-  //     return localaudio ? 'sendrecv' : 'recvonly';
-  //   }
-  //   return 'recvonly';
-  // }
 
   /// Send message via signaling channel
   void postmessage(String sessionId, String message) async {
@@ -596,34 +510,7 @@ class Signaling {
       var type = data['type'];
       var sdp = data['sdp'];
 
-      if (session != null &&
-          session.pc != null &&
-          type != null &&
-          sdp != null) {
-        LogUtil.v("Signaling: Handling answer message...");
-        session.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
-
-        // Get remote streams and handle audio tracks
-        final remoteStreams = session.pc?.getRemoteStreams();
-        LogUtil.v(
-            "Signaling: Remote streams count: ${remoteStreams?.length ?? 0}");
-
-        if (remoteStreams != null && remoteStreams.isNotEmpty) {
-          final remoteStream = remoteStreams.first;
-          if (remoteStream != null) {
-            LogUtil.v(
-                "Signaling: Processing remote stream with ${remoteStream.getAudioTracks().length} audio tracks");
-
-            // Enable all audio tracks by default
-            remoteStream.getAudioTracks().forEach((track) {
-              track.enabled = true;
-              LogUtil.v("Signaling: Enabled audio track: ${track.id}");
-            });
-
-            onAddRemoteStream?.call(session, remoteStream);
-          }
-        }
-      }
+      session?.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
     }
   }
 
@@ -766,25 +653,19 @@ class Signaling {
     });
   }
 
-  Future<MediaStream?> createLocalStream(
-      bool audio, bool video, bool datachannel) async {
-    try {
-      Map<String, dynamic> mediaConstraints = {
-        'audio': _localAudio,
-        'video': false
-      };
+  Future<MediaStream?> createLocalStream(bool audio, bool datachannel) async {
+    Map<String, dynamic> mediaConstraints = {
+      'audio': _localAudio,
+      'video': false
+    };
 
-      LogUtil.v("Signaling: Using media constraints: $mediaConstraints");
-      final stream =
-          await navigator.mediaDevices.getUserMedia(mediaConstraints);
-
-      if (stream != null) {
-        onLocalStream?.call(stream);
-        return stream;
-      }
-    } catch (e) {
-      LogUtil.v("Signaling: Error getting user media: $e");
+    LogUtil.v("Signaling: Using media constraints: $mediaConstraints");
+    final stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    if (stream != null) {
+      onLocalStream?.call(stream);
+      return stream;
     }
+
     LogUtil.v("Signaling: Stream is null");
     return null;
   }
@@ -810,7 +691,7 @@ class Signaling {
 
     if (_onlyDatachannel == false &&
         (_localAudio == true || _localVideo == true)) {
-      _localStream = await createLocalStream(audio, video, dataChannel);
+      _localStream = await createLocalStream(audio, dataChannel);
     }
 
     try {
@@ -991,7 +872,7 @@ class Signaling {
 
       await session.pc!.setLocalDescription(s);
 
-      // Determine the direction settings for media streams
+      //   // Determine the direction settings for media streams
       final datachanneldir = _datachannel ? 'true' : 'false';
       final videodir = 'recvonly';
       final audiodir = _localAudio ? 'sendrecv' : 'recvonly';
@@ -1165,53 +1046,6 @@ class Signaling {
         LogUtil.v("Signaling: Error stack trace: ${e.stackTrace}");
       }
     }
-    // var sess = _sessions[sessionId];
-    // if (sess != null) {
-    //   if (sess.recordState == RecordState.recording) {
-    //     try {
-    //       var appDocDir;
-    //       if (Platform.isIOS) {
-    //         appDocDir = await getApplicationDocumentsDirectory();
-    //       } else if (Platform.isAndroid) {
-    //         appDocDir = await getExternalStorageDirectory();
-    //       } else {
-    //         return;
-    //       }
-    //       String appDocPath = appDocDir!.path;
-    //       print('startRecord appDocPath : $appDocPath');
-    //       List<RTCRtpReceiver> receivers = await sess.pc!.getReceivers();
-    //       bool startrecorded = false;
-    //       receivers.forEach((receive) {
-    //         if (receive.track!.kind == "video") {
-    //           if (_remoteVideoTrack != null) {
-    //             if (_remoteVideoTrack!.id == receive.track!.id) {
-    //               if (startrecorded == false) {
-    //                 startrecorded = true;
-    //                 if (_isWeb()) {
-    //                 } else {
-    //                   RecorderAudioChannel audiochannel =
-    //                       RecorderAudioChannel.OUTPUT;
-    //                   _mediaRecorder.start('$appDocPath/test.mp4',
-    //                       videoTrack: receive.track,
-    //                       audioChannel: audiochannel);
-    //                   print('startRecord track ----------: ${receive.track}');
-    //                   sess.recordState = RecordState.recording;
-    //                   onRecordState?.call(sess, RecordState.recording);
-    //                 }
-    //               }
-    //             }
-    //           }
-    //         }
-    //       });
-    //     } catch (err) {
-    //       print(err);
-    //     }
-    //   } else {
-    //     print('startRecord  is recording');
-    //   }
-    // } else {
-    //   print('startRecord  is no session $sessionId');
-    // }
   }
 
   /// Stop video recording and save to appropriate location

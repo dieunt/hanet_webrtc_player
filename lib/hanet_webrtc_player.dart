@@ -6,23 +6,25 @@ import 'src/webrtc_manager.dart';
 
 class HanetWebRTCPlayer extends StatefulWidget {
   final String peerId;
+  final String source;
   final bool showVolume;
   final bool showMic;
   final bool showCapture;
   final bool showRecord;
   final bool showFullscreen;
-  final String source;
+  final bool showControls;
 
   const HanetWebRTCPlayer({
-    super.key,
+    Key? key,
     required this.peerId,
-    this.showVolume = false,
-    this.showMic = false,
+    this.source = "SubStream",
+    this.showVolume = true,
+    this.showMic = true,
     this.showCapture = false,
     this.showRecord = false,
-    this.showFullscreen = false,
-    this.source = "SubStream",
-  });
+    this.showFullscreen = true,
+    this.showControls = true,
+  }) : super(key: key);
 
   @override
   State<HanetWebRTCPlayer> createState() => _HanetWebRTCPlayerState();
@@ -88,6 +90,18 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
       }
     };
 
+    _webrtcManager?.onLocalStream = (stream) {
+      if (mounted && stream != null) {
+        setState(() => _showRemoteVideo = true);
+        // stream.getAudioTracks().forEach((track) {
+        //   setState(() {
+        //     _isMicOn = track.enabled;
+        //     _webrtcManager?.toggleMic(_isMicOn);
+        //   });
+        // });
+      }
+    };
+
     _webrtcManager?.onError = (error) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -146,111 +160,105 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     await _webrtcManager?.captureFrame();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // final size = MediaQuery.of(context).size;
-    final isLandscape = _isFullscreen;
+  Widget _buildVideoView() {
+    return _showRemoteVideo && _webrtcManager != null
+        ? RTCVideoView(
+            _webrtcManager!.remoteRenderer,
+            objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+          )
+        : const Center(child: CircularProgressIndicator(color: Colors.white));
+  }
 
-    return PopScope(
-      canPop: !kIsWeb
-          ? !_isFullscreen
-          : true, // Chỉ chặn pop trên Mobile khi fullscreen
-      onPopInvoked: (didPop) async {
-        if (!kIsWeb && _isFullscreen && !didPop) await _toggleFullscreen();
-      },
-      child: Scaffold(
-        body: SizedBox.expand(
-          child: Stack(
-            children: [
-              SizedBox.expand(
-                child: Container(
-                  color: Colors.black,
-                  child: _showRemoteVideo && _webrtcManager != null
-                      ? RTCVideoView(
-                          _webrtcManager!.remoteRenderer,
-                          objectFit:
-                              RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                        )
-                      : const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  // padding: EdgeInsets.symmetric(
-                  //   horizontal: 16.0,
-                  //   vertical: isLandscape ? 32.0 : 24.0,
-                  // ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (widget.showVolume)
-                        IconButton(
-                          icon: Icon(
-                            _isVolumeOn ? Icons.volume_up : Icons.volume_off,
-                            color: Colors.white,
-                          ),
-                          onPressed: widget.showVolume ? _toggleVolume : null,
-                        ),
-                      if (widget.showMic)
-                        IconButton(
-                          icon: Icon(
-                            _isMicOn ? Icons.mic : Icons.mic_off,
-                            color: Colors.white,
-                          ),
-                          onPressed: widget.showMic ? _toggleMic : null,
-                        ),
-                      if (widget.showCapture)
-                        IconButton(
-                          icon: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                          ),
-                          onPressed: _captureFrame,
-                        ),
-                      if (widget.showRecord)
-                        IconButton(
-                          icon: Icon(
-                            _isRecording
-                                ? Icons.stop
-                                : Icons.fiber_manual_record,
-                            color: _isRecording ? Colors.red : Colors.white,
-                          ),
-                          onPressed:
-                              _isRecording ? _stopRecording : _startRecording,
-                        ),
-                      if (widget.showFullscreen && !kIsWeb)
-                        IconButton(
-                          icon: Icon(
-                            _isFullscreen
-                                ? Icons.fullscreen_exit
-                                : Icons.fullscreen,
-                            color: Colors.white,
-                          ),
-                          onPressed: _toggleFullscreen,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+  Widget _buildControls() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.black.withOpacity(0.2),
+          ],
         ),
       ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (widget.showVolume)
+            IconButton(
+              icon: Icon(
+                _isVolumeOn ? Icons.volume_up : Icons.volume_off,
+                color: Colors.white,
+              ),
+              onPressed: _toggleVolume,
+            ),
+          if (widget.showMic)
+            IconButton(
+              icon: Icon(
+                _isMicOn ? Icons.mic : Icons.mic_off,
+                color: Colors.white,
+              ),
+              onPressed: _toggleMic,
+            ),
+          if (widget.showCapture)
+            IconButton(
+              icon: const Icon(Icons.camera_alt, color: Colors.white),
+              onPressed: _captureFrame,
+            ),
+          if (widget.showRecord)
+            IconButton(
+              icon: Icon(
+                _isRecording ? Icons.stop : Icons.fiber_manual_record,
+                color: _isRecording ? Colors.red : Colors.white,
+              ),
+              onPressed: _isRecording ? _stopRecording : _startRecording,
+            ),
+          if (widget.showFullscreen && !kIsWeb)
+            IconButton(
+              icon: Icon(
+                _isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                color: Colors.white,
+              ),
+              onPressed: _toggleFullscreen,
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Video view
+        _isFullscreen
+            ? Positioned.fill(
+                child: Container(
+                  color: Colors.black,
+                  child: _buildVideoView(),
+                ),
+              )
+            : Container(
+                width: double.infinity,
+                height: double.infinity,
+                child: _buildVideoView(),
+              ),
+        // Controls
+        if (widget.showControls)
+          _isFullscreen
+              ? Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _buildControls(),
+                )
+              : Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _buildControls(),
+                ),
+      ],
     );
   }
 }

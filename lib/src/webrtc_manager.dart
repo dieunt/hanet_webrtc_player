@@ -65,7 +65,7 @@ class WebRTCManager {
           peerId,
           true, // audio
           true, // video
-          true, // localAudio
+          false, // localAudio
           false, // localVideo
           true, // datachannel
           'live', // mode
@@ -79,7 +79,8 @@ class WebRTCManager {
     // Set up callbacks
     _signaling?.onLocalStream = (stream) {
       stream.getAudioTracks().forEach((track) {
-        track.enabled = false; // Disable local audio by default
+        track.enabled = true;
+        // track.enableSpeakerphone(true);
       });
       // _localStream = stream;
       _localRenderer.srcObject = stream;
@@ -88,8 +89,8 @@ class WebRTCManager {
 
     _signaling?.onAddRemoteStream = (session, stream) async {
       stream.getAudioTracks().forEach((track) {
-        track.enabled = false;
-        track.enableSpeakerphone(true);
+        track.enabled = true;
+        // track.enableSpeakerphone(true);
       });
 
       _remoteRenderer.srcObject = stream;
@@ -143,16 +144,16 @@ class WebRTCManager {
   }
 
   /// Toggle volume for remote audio tracks
-  Future<void> toggleVolume(bool enabled) async {
+  void toggleVolume(bool enabled) {
     if (_signaling != null) {
-      await _signaling!.muteSpeak(enabled);
+      _signaling!.muteSpeak(enabled);
     }
   }
 
   /// Toggle microphone for the local stream
   void toggleMic(bool enabled) {
     if (_signaling != null) {
-      _signaling!.muteMic(enabled);
+      _signaling!.muteMic(_sessionId, enabled);
     }
   }
 
