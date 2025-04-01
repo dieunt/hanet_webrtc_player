@@ -202,34 +202,34 @@ class Signaling {
       });
     }
 
-    // if (enabled && _localStream == null) {
-    //   var session = _sessions[sessionId];
-    //   if (session != null) {
-    //     RTCPeerConnection? pc = session.pc;
-    //     if (pc == null) {
-    //       return;
-    //     }
+    if (enabled && _localStream == null) {
+      var session = _sessions[sessionId];
+      if (session != null) {
+        RTCPeerConnection? pc = session.pc;
+        if (pc == null) {
+          return;
+        }
 
-    //     _localStream = await createLocalStream(_audio, _datachannel);
-    //     _localStream!.getTracks().forEach((track) async {
-    //       await pc.addTrack(track, _localStream!);
-    //     });
+        _localStream = await createLocalStream(_audio, _datachannel);
+        _localStream!.getTracks().forEach((track) async {
+          await pc.addTrack(track, _localStream!);
+        });
 
-    //     _localStream!.getAudioTracks().forEach((track) {
-    //       track.enabled = true;
-    //     });
+        _localStream!.getAudioTracks().forEach((track) {
+          track.enabled = true;
+        });
 
-    //     var newSession = await _createSession(null,
-    //         peerId: _peerId,
-    //         sessionId: RandomString.randomString(32),
-    //         audio: true,
-    //         video: false,
-    //         dataChannel: _datachannel);
+        var newSession = await _createSession(null,
+            peerId: _peerId,
+            sessionId: RandomString.randomString(32),
+            audio: true,
+            video: false,
+            dataChannel: _datachannel);
 
-    //     _sessions[sessionId] = newSession;
-    //     await _createOffer(newSession, _mode, _source);
-    //   }
-    // }
+        //     _sessions[sessionId] = newSession;
+        //     await _createOffer(newSession, _mode, _source);
+      }
+    }
   }
 
   /// Mute or unmute the remote audio stream

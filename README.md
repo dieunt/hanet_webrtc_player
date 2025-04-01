@@ -24,6 +24,7 @@ dependencies:
     hanet_webrtc_player:
         git:
             url: https://github.com/dieunt/hanet_webrtc_player.git
+            tag: ...
 ```
 
 ### Usage
@@ -38,26 +39,29 @@ HanetWebRTCPlayer()
 Container(
   width: 400,
   height: 300,
-  child: HanetWebRTCPlayer(),
+  child: HanetWebRTCPlayer(
+    peerId: '....',
+    showFullscreen: true,
+    showCapture: true,
+    showRecord: true,
+    showMic: true,
+    showVolume: true,
+    source: 'MainStream',
+    showControls: true,
+  ),
 )
-
-// Inside a responsive container
-Expanded(
-  child: HanetWebRTCPlayer(),
-)
-```
 
 ## Features
 
 ### Volume Control
 
 -   Toggle between volume on/off using the volume icon
--   Default state is volume on
+-   Default state is volume off
 
 ### Microphone Control
 
 -   Toggle between microphone on/off using the mic icon
--   Default state is microphone on
+-   Default state is microphone off
 
 ### Fullscreen Mode
 
@@ -73,6 +77,3 @@ Expanded(
 
 This package is currently in development and will be extended with actual WebRTC video playback functionality in future releases.
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
