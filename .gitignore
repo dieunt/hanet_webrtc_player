@@ -1,4 +1,7 @@
 flutter_webrtc
+lib_old
+example/ios/build
+
 
 # Miscellaneous
 *.class
