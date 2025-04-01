@@ -50,6 +50,7 @@ Container(
     showControls: true,
   ),
 )
+```
 
 ## Features
 
