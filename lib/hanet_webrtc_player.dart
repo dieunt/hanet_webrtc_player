@@ -110,6 +110,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
         setState(() => _isLoading = false);
         // ScaffoldMessenger.of(context)
         //     .showSnackBar(SnackBar(content: Text(error)));
+        widget.onOffline!();
       }
     };
 
