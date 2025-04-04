@@ -75,6 +75,8 @@ class WebRTCManager {
           'admin', // user
           '123456', // password
         );
+      } else if (state == OnlineState.offline) {
+        onOffline?.call();
       }
     };
 

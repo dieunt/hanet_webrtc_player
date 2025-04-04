@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hanet_webrtc_player/hanet_webrtc_player.dart';
 
 void main() {
@@ -41,7 +42,7 @@ class MyHomePage extends StatelessWidget {
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const HanetWebRTCPlayer(
+              child: HanetWebRTCPlayer(
                 peerId: 'HANT-00-92HY-VZ65-00002733',
                 showFullscreen: true,
                 showCapture: true,
@@ -50,6 +51,9 @@ class MyHomePage extends StatelessWidget {
                 showVolume: true,
                 source: 'MainStream',
                 showControls: true,
+                onOffline: () {
+                  debugPrint('onOffline');
+                },
               ),
             ),
           ],
