@@ -13,6 +13,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
   final bool showRecord;
   final bool showFullscreen;
   final bool showControls;
+  final VoidCallback? onOffline;
 
   const HanetWebRTCPlayer({
     Key? key,
@@ -24,6 +25,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
     this.showRecord = false,
     this.showFullscreen = true,
     this.showControls = true,
+    this.onOffline,
   }) : super(key: key);
 
   @override
@@ -37,6 +39,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   bool _isFullscreen = false;
   bool _isRecording = false;
   bool _showRemoteVideo = false;
+  bool _isLoading = true;
 
   WebRTCManager? _webrtcManager;
 
@@ -86,26 +89,33 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
     _webrtcManager?.onRemoteStream = (stream) {
       if (mounted && stream != null) {
-        setState(() => _showRemoteVideo = true);
+        setState(() {
+          _showRemoteVideo = true;
+          _isLoading = false;
+        });
       }
     };
 
     _webrtcManager?.onLocalStream = (stream) {
       if (mounted && stream != null) {
-        setState(() => _showRemoteVideo = true);
-        // stream.getAudioTracks().forEach((track) {
-        //   setState(() {
-        //     _isMicOn = track.enabled;
-        //     _webrtcManager?.toggleMic(_isMicOn);
-        //   });
-        // });
+        setState(() {
+          _showRemoteVideo = true;
+          _isLoading = false;
+        });
       }
     };
 
     _webrtcManager?.onError = (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error)));
+        setState(() => _isLoading = false);
+        // ScaffoldMessenger.of(context)
+        //     .showSnackBar(SnackBar(content: Text(error)));
+      }
+    };
+
+    _webrtcManager?.onOffline = () {
+      if (mounted && widget.onOffline != null) {
+        widget.onOffline!();
       }
     };
   }
@@ -161,12 +171,15 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   Widget _buildVideoView() {
-    return _showRemoteVideo && _webrtcManager != null
-        ? RTCVideoView(
-            _webrtcManager!.remoteRenderer,
-            objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-          )
-        : const Center(child: CircularProgressIndicator(color: Colors.white));
+    return Container(
+      color: _isLoading ? const Color(0xFFEEF0F8) : Colors.black,
+      child: _showRemoteVideo && _webrtcManager != null
+          ? RTCVideoView(
+              _webrtcManager!.remoteRenderer,
+              objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+            )
+          : const Center(child: CircularProgressIndicator(color: Colors.white)),
+    );
   }
 
   Widget _buildControls() {
@@ -233,10 +246,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
         // Video view
         _isFullscreen
             ? Positioned.fill(
-                child: Container(
-                  color: Colors.black,
-                  child: _buildVideoView(),
-                ),
+                child: _buildVideoView(),
               )
             : Container(
                 width: double.infinity,

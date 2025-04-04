@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 // import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:uuid/uuid.dart';
@@ -32,6 +33,7 @@ class WebRTCManager {
   Function(MediaStream?)? onRemoteStream;
   Function(bool)? onRecordingStateChanged;
   Function(String)? onError;
+  VoidCallback? onOffline;
 
   /// Creates a new WebRTCManager instance
   WebRTCManager({required String peerId, String source = "SubStream"}) {
@@ -101,10 +103,16 @@ class WebRTCManager {
       // _remoteStream = null;
       _remoteRenderer.srcObject = null;
       onRemoteStream?.call(null);
+      onOffline?.call();
     };
 
     _signaling?.onRecordState = (session, state) {
       onRecordingStateChanged?.call(state == RecordState.recording);
+    };
+
+    _signaling?.onError = (error) {
+      onError?.call(error);
+      onOffline?.call();
     };
   }
 
@@ -122,6 +130,7 @@ class WebRTCManager {
     _socket?.onClose = (code, reason) {
       _isWebSocketConnected = false;
       onError?.call('WebSocket connection closed: $reason');
+      onOffline?.call();
     };
 
     // Connect to the WebSocket server
@@ -160,21 +169,21 @@ class WebRTCManager {
   /// Start recording the remote stream
   Future<void> startRecording() async {
     if (_signaling != null) {
-      await _signaling!.startRecord(_sessionId!);
+      await _signaling!.startRecord(_sessionId);
     }
   }
 
   /// Stop recording the remote stream
   Future<void> stopRecording() async {
     if (_signaling != null) {
-      await _signaling!.stopRecord(_sessionId!);
+      await _signaling!.stopRecord(_sessionId);
     }
   }
 
   /// Capture a frame from the remote stream
   Future<void> captureFrame() async {
     if (_signaling != null) {
-      await _signaling!.captureFrame(_sessionId!);
+      await _signaling!.captureFrame(_sessionId);
     }
   }
 
@@ -190,6 +199,7 @@ class WebRTCManager {
     _remoteRenderer.dispose();
     _signaling?.close();
     _socket?.close();
+    onOffline?.call();
 
     // Clean up event bus listeners
     _delSessionMsgEvent?.cancel();

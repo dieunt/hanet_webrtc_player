@@ -219,15 +219,19 @@ class Signaling {
           track.enabled = true;
         });
 
-        var newSession = await _createSession(null,
-            peerId: _peerId,
-            sessionId: RandomString.randomString(32),
-            audio: true,
-            video: false,
-            dataChannel: _datachannel);
+        // session.pc = pc;
+        // _sessions[sessionId] = session;
+        // await _createOffer(session, _mode, _source);
 
-        //     _sessions[sessionId] = newSession;
-        //     await _createOffer(newSession, _mode, _source);
+        // var newSession = await _createSession(session,
+        //     peerId: _peerId,
+        //     sessionId: RandomString.randomString(32),
+        //     audio: true,
+        //     video: false,
+        //     dataChannel: _datachannel);
+
+        // _sessions[sessionId] = newSession;
+        // await _createOffer(newSession, _mode, _source);
       }
     }
   }
@@ -488,19 +492,19 @@ class Signaling {
   //   var useAudio = _parseAudioDirection(data['audio']);
   //   var useVideo = _parseVideoDirection(data['video']);
 
-  //   // Create session with parsed parameters
-  //   invite(
-  //       sessionId,
-  //       peerId,
-  //       useAudio.enabled,
-  //       useVideo.enabled,
-  //       useAudio.isLocal,
-  //       useVideo.isLocal,
-  //       useDataChannel,
-  //       _mode,
-  //       _source,
-  //       _user,
-  //       _password);
+  // Create session with parsed parameters
+  // invite(
+  //     sessionId,
+  //     peerId,
+  //     useAudio.enabled,
+  //     useVideo.enabled,
+  //     useAudio.isLocal,
+  //     useVideo.isLocal,
+  //     useDataChannel,
+  //     _mode,
+  //     _source,
+  //     _user,
+  //     _password);
   // }
 
   void _handleAnswerMessage(Map<String, dynamic> data) {
@@ -511,6 +515,17 @@ class Signaling {
       var sdp = data['sdp'];
 
       session?.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
+      // session?.pc?.onTrack = (event) {
+      //   LogUtil.v("Signaling: _handleAnswerMessage: onAddRemoteStream...");
+      //   onAddRemoteStream?.call(session, event.streams[0]);
+      //   session._remoteStreams.add(event.streams[0]);
+      // };
+      // session?.pc?.onAddTrack = (stream, track) {
+      //   LogUtil.v("Signaling: _handleAnswerMessage: onAddTrack...");
+      //   if (track.kind == "video") {
+      //     _remoteVideoTrack = track;
+      //   }
+      // };
     }
   }
 
