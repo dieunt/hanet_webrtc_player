@@ -8,7 +8,8 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'utils/utils.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:flutter_image_gallery_saver/flutter_image_gallery_saver.dart';
+
 import 'utils/web_utils.dart' if (dart.library.io) 'utils/web_utils_stub.dart'
     as web_utils;
 
@@ -218,20 +219,6 @@ class Signaling {
         _localStream!.getAudioTracks().forEach((track) {
           track.enabled = true;
         });
-
-        // session.pc = pc;
-        // _sessions[sessionId] = session;
-        // await _createOffer(session, _mode, _source);
-
-        // var newSession = await _createSession(session,
-        //     peerId: _peerId,
-        //     sessionId: RandomString.randomString(32),
-        //     audio: true,
-        //     video: false,
-        //     dataChannel: _datachannel);
-
-        // _sessions[sessionId] = newSession;
-        // await _createOffer(newSession, _mode, _source);
       }
     }
   }
@@ -1092,7 +1079,7 @@ class Signaling {
                 "Recording_${DateTime.now().millisecondsSinceEpoch}.mp4";
 
             // For mobile platforms (iOS and Android), save to photo library
-            await ImageGallerySaver.saveFile(filePath, name: filename);
+            await FlutterImageGallerySaver.saveFile(filePath);
 
             // Clean up the temporary file
             await file.delete();
@@ -1134,11 +1121,7 @@ class Signaling {
             } else {
               // For mobile platforms (iOS and Android), save to photo library
               LogUtil.v("Signaling: mobile save image: $filename");
-              await ImageGallerySaver.saveImage(
-                bytes,
-                quality: 100,
-                name: filename,
-              );
+              await FlutterImageGallerySaver.saveImage(bytes);
             }
             break;
           }

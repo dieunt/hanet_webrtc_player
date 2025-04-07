@@ -86,6 +86,12 @@
       "languageVersion": "3.7"
     },
     {
+      "name": "flutter_image_gallery_saver",
+      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/flutter_image_gallery_saver-0.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
       "name": "flutter_lints",
       "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/flutter_lints-5.0.0",
       "packageUri": "lib/",
@@ -114,12 +120,6 @@
       "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/html-0.15.5",
       "packageUri": "lib/",
       "languageVersion": "3.2"
-    },
-    {
-      "name": "image_gallery_saver",
-      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/image_gallery_saver-2.0.3",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
     },
     {
       "name": "js",
@@ -416,7 +416,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-03-26T16:41:14.633337Z",
+  "generated": "2025-04-07T12:04:07.627507Z",
   "generator": "pub",
   "generatorVersion": "3.7.0",
   "flutterRoot": "file:///Users/hanet/flutter",
