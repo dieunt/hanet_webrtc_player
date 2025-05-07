@@ -45,7 +45,7 @@
     },
     {
       "name": "dart_webrtc",
-      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/dart_webrtc-1.5.3",
+      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/dart_webrtc-1.5.3+hotfix.2",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -111,7 +111,7 @@
     },
     {
       "name": "flutter_webrtc",
-      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/flutter_webrtc-0.13.0",
+      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/flutter_webrtc-0.14.0",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -399,7 +399,7 @@
     },
     {
       "name": "webrtc_interface",
-      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/webrtc_interface-1.2.2+hotfix.1",
+      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/webrtc_interface-1.2.2+hotfix.2",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -416,7 +416,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-04-07T12:04:07.627507Z",
+  "generated": "2025-05-07T11:07:30.698208Z",
   "generator": "pub",
   "generatorVersion": "3.7.0",
   "flutterRoot": "file:///Users/hanet/flutter",

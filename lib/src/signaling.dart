@@ -655,6 +655,35 @@ class Signaling {
     });
   }
 
+  // MediaStream createCustomMediaStream() {
+  //   try {
+  //     // Create an AudioContext (similar to window.AudioContext or webkitAudioContext)
+  //     final AudioContext context = AudioContext();
+
+  //     // Create a destination node that outputs a MediaStream
+  //     final streamDestination = context.createMediaStreamDestination();
+
+  //     // Create a Buffer Source node. (The extra Float32Array code in your original snippet isn’t needed.)
+  //     final AudioBufferSourceNode source = context.createBufferSource();
+
+  //     // Connect the buffer source node to the destination.
+  //     source.connect(destination);
+
+  //     // Enable looping for the source.
+  //     source.loop = true;
+
+  //     // Start playback from the buffer source immediately.
+  //     source.start(0);
+
+  //     // Return the MediaStream from the destination.
+  //     return destination.stream;
+  //   } catch (e) {
+  //     // In case of any errors (such as when the Web Audio API is not supported),
+  //     // return an empty MediaStream.
+  //     return MediaStream();
+  //   }
+  // }
+
   Future<MediaStream?> createLocalStream(bool audio, bool datachannel) async {
     Map<String, dynamic> mediaConstraints = {
       'audio': _localAudio,

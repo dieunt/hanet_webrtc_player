@@ -43,13 +43,13 @@ class MyHomePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: HanetWebRTCPlayer(
-                peerId: 'HANT-00-92HY-VZ65-00002733',
+                peerId: 'HANT-00-6152-98ZP-00002256',
                 showFullscreen: true,
                 showCapture: true,
                 showRecord: true,
                 showMic: true,
                 showVolume: true,
-                source: 'MainStream',
+                source: 'SubStream',
                 showControls: true,
                 onOffline: () {
                   debugPrint('onOffline');
