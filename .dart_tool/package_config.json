@@ -111,7 +111,7 @@
     },
     {
       "name": "flutter_webrtc",
-      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/flutter_webrtc-0.14.0",
+      "rootUri": "file:///Users/hanet/.pub-cache/hosted/pub.dev/flutter_webrtc-0.12.12+hotfix.1",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -416,7 +416,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-05-07T11:07:30.698208Z",
+  "generated": "2025-05-09T06:02:08.264152Z",
   "generator": "pub",
   "generatorVersion": "3.7.0",
   "flutterRoot": "file:///Users/hanet/flutter",

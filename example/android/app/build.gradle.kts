@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.hanet_webrtc_player_example"
-    compileSdk = 35
+    compileSdk = 34
     // ndkVersion = "25.1.8937393"
 
     compileOptions {

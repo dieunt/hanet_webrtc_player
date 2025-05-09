@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_webrtc: ^0.14.0
+  flutter_webrtc: 0.12.12+hotfix.1
   shared_preferences: ^2.0.9
   path_provider: ^2.0.7
   event_bus: ^2.0.0  
