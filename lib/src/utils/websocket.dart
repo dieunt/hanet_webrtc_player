@@ -35,7 +35,9 @@ class WebSocket {
       _webSocket?.onClose = (code, reason) {
         _stopHeartbeat();
         onClose?.call(code, reason);
-        _reconnect();
+        if (code == 500) {
+          _reconnect();
+        }
       };
       await _webSocket?.connect();
     } catch (e) {

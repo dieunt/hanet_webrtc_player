@@ -13,6 +13,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
   final bool showRecord;
   final bool showFullscreen;
   final bool showControls;
+  final bool isDebug;
   final VoidCallback? onOffline;
 
   const HanetWebRTCPlayer({
@@ -25,6 +26,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
     this.showRecord = false,
     this.showFullscreen = true,
     this.showControls = true,
+    this.isDebug = false,
     this.onOffline,
   }) : super(key: key);
 
@@ -40,6 +42,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   bool _isRecording = false;
   bool _showRemoteVideo = false;
   bool _isLoading = true;
+  bool _isDebug = false;
 
   WebRTCManager? _webrtcManager;
 
@@ -54,7 +57,10 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _webrtcManager?.dispose();
+    if (_webrtcManager != null) {
+      _webrtcManager!.dispose();
+      _webrtcManager = null;
+    }
     if (!kIsWeb) _resetOrientation(); // Chỉ reset orientation trên Mobile
     super.dispose();
   }
@@ -81,6 +87,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     _webrtcManager = WebRTCManager(
       peerId: widget.peerId,
       source: widget.source,
+      isDebug: widget.isDebug,
     );
 
     _webrtcManager?.onRecordingStateChanged = (isRecording) {

@@ -224,7 +224,21 @@ class Signaling {
   }
 
   /// Mute or unmute the remote audio stream
-  void muteSpeak(bool enabled) async {
+  void muteSpeak(String sessionId, bool enabled) async {
+    var sess = _sessions[sessionId];
+    if (sess != null) {
+      for (int i = 0; i < sess._remoteStreams.length; i++) {
+        MediaStream item = sess._remoteStreams[i];
+        if (item != null) {
+          item.getAudioTracks().forEach((track) {
+            track.enabled = enabled;
+          });
+        }
+      }
+    }
+  }
+
+  void muteSpeakAll(bool enabled) async {
     _sessions.forEach((key, sess) async {
       for (int i = 0; i < sess._remoteStreams.length; i++) {
         MediaStream item = sess._remoteStreams[i];

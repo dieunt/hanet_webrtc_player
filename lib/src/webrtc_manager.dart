@@ -36,8 +36,11 @@ class WebRTCManager {
   VoidCallback? onOffline;
 
   /// Creates a new WebRTCManager instance
-  WebRTCManager({required String peerId, String source = "SubStream"}) {
-    LogUtil.init(title: "webrtc", isDebug: true, limitLength: 800);
+  WebRTCManager(
+      {required String peerId,
+      String source = "SubStream",
+      bool isDebug = false}) {
+    LogUtil.init(title: "webrtc", isDebug: isDebug, limitLength: 800);
 
     _selfId = Uuid().v4();
     _peerId = peerId;
@@ -93,7 +96,7 @@ class WebRTCManager {
 
     _signaling?.onAddRemoteStream = (session, stream) async {
       stream.getAudioTracks().forEach((track) {
-        track.enabled = true;
+        track.enabled = false;
         // track.enableSpeakerphone(true);
       });
 
@@ -157,7 +160,8 @@ class WebRTCManager {
   /// Toggle volume for remote audio tracks
   void toggleVolume(bool enabled) {
     if (_signaling != null) {
-      _signaling!.muteSpeak(enabled);
+      // _signaling!.muteSpeakAll(enabled);
+      _signaling!.muteSpeak(_sessionId, enabled);
     }
   }
 
@@ -197,6 +201,7 @@ class WebRTCManager {
 
   /// Clean up resources
   Future<void> dispose() async {
+    print('WM: Disposing WebRTCManager');
     _localRenderer.dispose();
     _remoteRenderer.dispose();
     _signaling?.close();
