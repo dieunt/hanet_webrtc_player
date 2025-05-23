@@ -15,6 +15,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
   final bool showControls;
   final bool isDebug;
   final VoidCallback? onOffline;
+  final Function(bool)? onFullscreen;
 
   const HanetWebRTCPlayer({
     Key? key,
@@ -28,6 +29,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
     this.showControls = true,
     this.isDebug = false,
     this.onOffline,
+    this.onFullscreen,
   }) : super(key: key);
 
   @override
@@ -157,8 +159,10 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
           SystemUiMode.immersiveSticky,
           overlays: [],
         );
+        widget.onFullscreen!(true);
       } else {
         _resetOrientation();
+        widget.onFullscreen!(false);
       }
     });
   }

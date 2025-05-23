@@ -12,49 +12,65 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hanet WebRTC Player Demo',
+      title: 'Hanet WebRTC Player Example',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      home: const MyHomePage(),
+      home: const PlayerExample(),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+class PlayerExample extends StatefulWidget {
+  const PlayerExample({super.key});
+
+  @override
+  State<PlayerExample> createState() => _PlayerExampleState();
+}
+
+class _PlayerExampleState extends State<PlayerExample> {
+  bool _showPlayer = true;
+
+  void _togglePlayer() {
+    setState(() {
+      _showPlayer = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hanet WebRTC Player Demo'),
+        title: const Text('Hanet WebRTC Player Example'),
       ),
-      body: SingleChildScrollView(
+      body: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 450,
-              height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
+            if (_showPlayer)
+              Container(
+                width: 450,
+                height: 250,
+                child: HanetWebRTCPlayer(
+                  peerId: 'HANT-00-92HY-VZ65-00002733',
+                  showFullscreen: true,
+                  showCapture: true,
+                  showRecord: true,
+                  showMic: true,
+                  showVolume: true,
+                  source: 'SubStream',
+                  showControls: true,
+                  onOffline: () {
+                    debugPrint('onOffline');
+                  },
+                  isDebug: false,
+                ),
               ),
-              child: HanetWebRTCPlayer(
-                peerId: 'HANT-00-6152-98ZP-00002256',
-                showFullscreen: true,
-                showCapture: true,
-                showRecord: true,
-                showMic: true,
-                showVolume: true,
-                source: 'SubStream',
-                showControls: true,
-                onOffline: () {
-                  debugPrint('onOffline');
-                },
-              ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _togglePlayer,
+              child: const Text('Dispose Player'),
             ),
           ],
         ),
