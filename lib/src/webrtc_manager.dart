@@ -54,7 +54,7 @@ class WebRTCManager {
   Future<void> _initializeRenderers() async {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
-    LogUtil.v('WM: Renderers initialized');
+    LogUtil.d('WM: Renderers initialized');
   }
 
   void _initializeSignaling(String peerId) {
@@ -63,7 +63,7 @@ class WebRTCManager {
 
     // Handle session creation
     _signaling?.onSessionCreate = (sessionId, peerId, state) {
-      LogUtil.v('WM: Session created with state: $state');
+      LogUtil.d('WM: Session created with state: $state');
       if (state == OnlineState.online && peerId != _selfId) {
         _signaling?.startcall(
           sessionId,
@@ -127,7 +127,7 @@ class WebRTCManager {
     _socket?.onMessage = (message) => _handleWebSocketMessage(message);
 
     _socket?.onOpen = () {
-      LogUtil.v('WM: WebSocket connected');
+      LogUtil.d('WM: WebSocket connected');
       _isWebSocketConnected = true;
       _signaling?.connect();
     };
@@ -144,7 +144,7 @@ class WebRTCManager {
 
   void _handleWebSocketMessage(dynamic message) {
     if (_signaling != null) {
-      LogUtil.v('WM: Received WS message: ${message}');
+      LogUtil.d('WM: Received WS message: ${message}');
       _signaling!.onMessage(message);
     }
   }
@@ -152,7 +152,7 @@ class WebRTCManager {
   void _send(String event, dynamic data) {
     if (_socket != null && _isWebSocketConnected) {
       final message = jsonEncode({'eventName': event, 'data': data});
-      LogUtil.v('WM: Sending WS message: $message');
+      LogUtil.d('WM: Sending WS message: $message');
       _socket!.send(message);
     }
   }

@@ -266,7 +266,7 @@ class Signaling {
       String password) {
     // Log the time taken to reach this point
     var delay = RandomString.currentTimeMillis() - _startTime;
-    print('Singaling: <<<<  send call use time  :$delay');
+    // print('Singaling: <<<<  send call use time  :$delay');
 
     // Update class variables with the call parameters
     _mode = mode;
@@ -341,7 +341,7 @@ class Signaling {
     var eventName = mapData['eventName'];
     var data = mapData['data'];
 
-    LogUtil.v('Signaling: Processing message type: $eventName');
+    LogUtil.d('Signaling: Processing message type: $eventName');
 
     switch (eventName) {
       case '_create':
@@ -377,15 +377,15 @@ class Signaling {
         break;
 
       case '_connectinfo':
-        LogUtil.v("Signaling: Received connect info");
+        LogUtil.d("Signaling: Received connect info");
         break;
 
       case '_ping':
-        LogUtil.v("Signaling: Received keepalive response");
+        LogUtil.d("Signaling: Received keepalive response");
         break;
 
       default:
-        LogUtil.v("Signaling: Received unknown message type: $eventName");
+        LogUtil.d("Signaling: Received unknown message type: $eventName");
         break;
     }
   }
@@ -399,7 +399,7 @@ class Signaling {
     var iceServers = data['iceServers'];
     if (iceServers != null) {
       if (iceServers is String) {
-        LogUtil.v('Signaling: Updating ICE servers from string');
+        LogUtil.d('Signaling: Updating ICE servers from string');
         _iceServers = _decoder.convert(iceServers);
       } else {
         var subIceServers = iceServers['iceServers'];
@@ -428,7 +428,7 @@ class Signaling {
       var sdp = data['sdp'];
 
       if (sessionId == null || peerId == null || sdp == null) {
-        LogUtil.v("Signaling: Missing required fields in offer message");
+        LogUtil.d("Signaling: Missing required fields in offer message");
         return;
       }
 
@@ -469,13 +469,13 @@ class Signaling {
 
       onCallStateChange?.call(newSession, CallState.callStateNew);
     } catch (e) {
-      LogUtil.v("Signaling: Error handling offer message: $e");
+      LogUtil.d("Signaling: Error handling offer message: $e");
     }
   }
 
   // void _handleCallMessage(Map<String, dynamic> data) {
   //   if (data['sessionId'] == null || data['from'] == null) {
-  //     LogUtil.v("Signaling: Missing required fields in call message");
+  //     LogUtil.d("Signaling: Missing required fields in call message");
   //     return;
   //   }
 
@@ -517,12 +517,12 @@ class Signaling {
 
       session?.pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
       // session?.pc?.onTrack = (event) {
-      //   LogUtil.v("Signaling: _handleAnswerMessage: onAddRemoteStream...");
+      //   LogUtil.d("Signaling: _handleAnswerMessage: onAddRemoteStream...");
       //   onAddRemoteStream?.call(session, event.streams[0]);
       //   session._remoteStreams.add(event.streams[0]);
       // };
       // session?.pc?.onAddTrack = (stream, track) {
-      //   LogUtil.v("Signaling: _handleAnswerMessage: onAddTrack...");
+      //   LogUtil.d("Signaling: _handleAnswerMessage: onAddTrack...");
       //   if (track.kind == "video") {
       //     _remoteVideoTrack = track;
       //   }
@@ -548,7 +548,7 @@ class Signaling {
       var sdpMid = candidateObj['sdpMid'];
 
       if (candidate == null || sdpMLineIndex == null || sdpMid == null) {
-        LogUtil.v("Signaling: Invalid ICE candidate data");
+        LogUtil.d("Signaling: Invalid ICE candidate data");
         return;
       }
 
@@ -557,18 +557,18 @@ class Signaling {
 
       if (session != null) {
         if (session.pc != null) {
-          LogUtil.v("Signaling: Adding ICE candidate");
+          LogUtil.d("Signaling: Adding ICE candidate");
           await session.pc?.addCandidate(iceCandidate);
         } else {
-          LogUtil.v("Signaling: Storing ICE candidate for later");
+          LogUtil.d("Signaling: Storing ICE candidate for later");
           session.remoteCandidates.add(iceCandidate);
         }
       } else {
-        LogUtil.v("Signaling: No session found, storing candidate globally");
+        LogUtil.d("Signaling: No session found, storing candidate globally");
         remoteCandidates.add(iceCandidate);
       }
     } catch (e) {
-      LogUtil.v("Signaling: Error handling ICE candidate: $e");
+      LogUtil.d("Signaling: Error handling ICE candidate: $e");
     }
   }
 
@@ -607,7 +607,7 @@ class Signaling {
 
   Future<void> _addPendingCandidates(Session session) async {
     if (session.remoteCandidates.isNotEmpty) {
-      LogUtil.v("Signaling: Adding pending session candidates");
+      LogUtil.d("Signaling: Adding pending session candidates");
       for (var candidate in session.remoteCandidates) {
         await session.pc?.addCandidate(candidate);
       }
@@ -615,7 +615,7 @@ class Signaling {
     }
 
     if (remoteCandidates.isNotEmpty) {
-      LogUtil.v("Signaling: Adding pending global candidates");
+      LogUtil.d("Signaling: Adding pending global candidates");
       for (var candidate in remoteCandidates) {
         await session.pc?.addCandidate(candidate);
       }
@@ -659,7 +659,7 @@ class Signaling {
   }
 
   void connect() {
-    LogUtil.v("Signaling: WebSocket connected");
+    LogUtil.d("Signaling: WebSocket connected");
     _send('__connectto', {
       'sessionId': _sessionId,
       'sessionType': kIsWeb ? 'IE' : "flutter",
@@ -704,14 +704,14 @@ class Signaling {
       'video': false
     };
 
-    LogUtil.v("Signaling: Using media constraints: $mediaConstraints");
+    LogUtil.d("Signaling: Using media constraints: $mediaConstraints");
     final stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
     if (stream != null) {
       onLocalStream?.call(stream);
       return stream;
     }
 
-    LogUtil.v("Signaling: Stream is null");
+    LogUtil.d("Signaling: Stream is null");
     return null;
   }
 
@@ -723,7 +723,7 @@ class Signaling {
       required bool dataChannel}) async {
     // Check if session already exists
     if (_sessions.containsKey(sessionId)) {
-      LogUtil.v("Signaling: Session already exists, reusing");
+      LogUtil.d("Signaling: Session already exists, reusing");
       return _sessions[sessionId]!;
     }
 
@@ -751,31 +751,31 @@ class Signaling {
         _sessions.remove(sessionId);
         throw Exception("Failed to create peer connection");
       }
-      LogUtil.v("Signaling: Peer connection created successfully");
+      LogUtil.d("Signaling: Peer connection created successfully");
 
       if (_onlyDatachannel == false) {
         switch (sdpSemantics) {
           case 'plan-b':
-            LogUtil.v("Signaling: Using Plan-B SDP semantics");
+            LogUtil.d("Signaling: Using Plan-B SDP semantics");
             pc.onAddStream = (MediaStream stream) {
               onAddRemoteStream?.call(newSession, stream);
               newSession._remoteStreams.add(stream);
             };
 
             if (_localStream != null) {
-              LogUtil.v("Signaling: Adding local stream to peer (plan-b)");
+              LogUtil.d("Signaling: Adding local stream to peer (plan-b)");
               await pc.addStream(_localStream!);
             }
             break;
           case 'unified-plan':
-            LogUtil.v("Signaling: Using Unified-Plan SDP semantics");
+            LogUtil.d("Signaling: Using Unified-Plan SDP semantics");
             pc.onTrack = (event) {
               onAddRemoteStream?.call(newSession, event.streams[0]);
               newSession._remoteStreams.add(event.streams[0]);
             };
 
             if (_localStream != null) {
-              LogUtil.v("Signaling: Adding local tracks (unified-plan)");
+              LogUtil.d("Signaling: Adding local tracks (unified-plan)");
               _localStream!.getTracks().forEach((track) {
                 pc.addTrack(track, _localStream!);
               });
@@ -784,14 +784,14 @@ class Signaling {
         }
       }
 
-      LogUtil.v("Signaling: Setting up peer connection event handlers");
+      LogUtil.d("Signaling: Setting up peer connection event handlers");
       pc.onIceCandidate = (candidate) async {
         if (candidate == null) {
-          LogUtil.v("Signaling: ICE gathering completed");
+          LogUtil.d("Signaling: ICE gathering completed");
           return;
         }
 
-        LogUtil.v("Signaling: Sending ICE candidate");
+        LogUtil.d("Signaling: Sending ICE candidate");
         await Future.delayed(
             const Duration(milliseconds: 10),
             () => _send('__ice_candidate', {
@@ -809,20 +809,20 @@ class Signaling {
       };
 
       pc.onSignalingState = (state) {
-        LogUtil.v("Signaling: Signaling state changed: $state");
+        LogUtil.d("Signaling: Signaling state changed: $state");
       };
 
       pc.onConnectionState = (state) {
-        LogUtil.v("Signaling: Connection state changed: $state");
+        LogUtil.d("Signaling: Connection state changed: $state");
         onSessionRTCConnectState?.call(newSession, state);
       };
 
       pc.onIceGatheringState = (state) {
-        LogUtil.v("Signaling: ICE gathering state changed: $state");
+        LogUtil.d("Signaling: ICE gathering state changed: $state");
       };
 
       pc.onIceConnectionState = (state) {
-        LogUtil.v("Signaling: ICE connection state changed: $state");
+        LogUtil.d("Signaling: ICE connection state changed: $state");
       };
 
       pc.onAddStream = (stream) {
@@ -863,11 +863,11 @@ class Signaling {
         _addDataChannel(newSession, channel);
       };
 
-      LogUtil.v("Signaling: Session created successfully");
+      LogUtil.d("Signaling: Session created successfully");
       newSession.pc = pc;
       return newSession;
     } catch (e) {
-      LogUtil.v("Signaling: Error setting up peer connection: $e");
+      LogUtil.d("Signaling: Error setting up peer connection: $e");
       _sessions.remove(sessionId);
       throw Exception("Error setting up peer connection: $e");
     }
@@ -940,7 +940,7 @@ class Signaling {
         "iceservers": _encoder.convert(_iceServers)
       });
     } catch (e) {
-      LogUtil.v("Signaling: Error creating offer: $e");
+      LogUtil.d("Signaling: Error creating offer: $e");
     }
   }
 
@@ -952,8 +952,8 @@ class Signaling {
           await session.pc!.createAnswer(_onlyDatachannel ? {} : dcConstraints);
       await session.pc!.setLocalDescription(s);
       var delay = RandomString.currentTimeMillis() - _startTime;
-      LogUtil.v("Signaling: Created answer after delay: $delay");
-      // LogUtil.v("Signaling: Created answer SDP: ${s.sdp}");
+      LogUtil.d("Signaling: Created answer after delay: $delay");
+      // LogUtil.d("Signaling: Created answer SDP: ${s.sdp}");
       _send('__answer', {
         "type": s.type,
         "sdp": s.sdp,
@@ -964,7 +964,7 @@ class Signaling {
         'to': session.pid
       });
     } catch (e) {
-      LogUtil.v("Signaling: Error creating answer: $e");
+      LogUtil.d("Signaling: Error creating answer: $e");
     }
   }
 
@@ -1025,18 +1025,18 @@ class Signaling {
   Future<void> startRecord(String sessionId) async {
     try {
       if (_isWeb()) {
-        LogUtil.v("Signaling: Recording not supported on web platform");
+        LogUtil.d("Signaling: Recording not supported on web platform");
         return;
       }
 
       var session = _sessions[sessionId];
       if (session == null) {
-        LogUtil.v("Signaling: No session found: $sessionId");
+        LogUtil.d("Signaling: No session found: $sessionId");
         return;
       }
 
       if (session.recordState == RecordState.recording) {
-        LogUtil.v("Signaling: Recording already in progress: $sessionId");
+        LogUtil.d("Signaling: Recording already in progress: $sessionId");
         return;
       }
 
@@ -1049,14 +1049,14 @@ class Signaling {
       }
 
       if (appDocDir == null) {
-        LogUtil.v("Signaling: Failed to get application directory");
+        LogUtil.d("Signaling: Failed to get application directory");
         return;
       }
 
       String appDocPath = appDocDir.path;
       final filename = "Recording_${RandomString.randomNumeric(8)}.mp4";
       final filePath = "$appDocPath/$filename";
-      LogUtil.v("Signaling: Recording started: $filePath");
+      LogUtil.d("Signaling: Recording started: $filePath");
 
       // Get all receivers and find video track
       List<RTCRtpReceiver> receivers = await session.pc!.getReceivers();
@@ -1083,12 +1083,12 @@ class Signaling {
       }
 
       if (!recordingStarted) {
-        LogUtil.v("Signaling: No suitable video track found for recording");
+        LogUtil.d("Signaling: No suitable video track found for recording");
       }
     } catch (e) {
-      LogUtil.v("Signaling: Error starting recording: $e");
+      LogUtil.d("Signaling: Error starting recording: $e");
       if (e is Error) {
-        LogUtil.v("Signaling: Error stack trace: ${e.stackTrace}");
+        LogUtil.d("Signaling: Error stack trace: ${e.stackTrace}");
       }
     }
   }
@@ -1097,13 +1097,13 @@ class Signaling {
   Future<void> stopRecord(String sessionId) async {
     try {
       if (_isWeb()) {
-        LogUtil.v("Signaling: Recording not supported on web platform");
+        LogUtil.d("Signaling: Recording not supported on web platform");
         return;
       }
 
       var session = _sessions[sessionId];
       if (session == null) {
-        LogUtil.v("Signaling: No session found: $sessionId");
+        LogUtil.d("Signaling: No session found: $sessionId");
         return;
       }
 
@@ -1112,7 +1112,7 @@ class Signaling {
         session.recordState = RecordState.recordClosed;
         onRecordState?.call(session, RecordState.recordClosed);
 
-        LogUtil.v("Signaling: Recording stopped successfully");
+        LogUtil.d("Signaling: Recording stopped successfully");
 
         if (filePath != null) {
           final file = File(filePath);
@@ -1130,7 +1130,7 @@ class Signaling {
         }
       }
     } catch (e) {
-      LogUtil.v("Signaling: Error stopping recording: $e");
+      LogUtil.d("Signaling: Error stopping recording: $e");
     }
   }
 
@@ -1139,7 +1139,7 @@ class Signaling {
     try {
       var session = _sessions[sessionId];
       if (session == null) {
-        LogUtil.v("Signaling: No session found: $sessionId");
+        LogUtil.d("Signaling: No session found: $sessionId");
         return;
       }
 
@@ -1163,7 +1163,7 @@ class Signaling {
               web_utils.downloadFile(bytes, filename);
             } else {
               // For mobile platforms (iOS and Android), save to photo library
-              LogUtil.v("Signaling: mobile save image: $filename");
+              LogUtil.d("Signaling: mobile save image: $filename");
               await FlutterImageGallerySaver.saveImage(bytes);
             }
             break;
@@ -1171,7 +1171,7 @@ class Signaling {
         }
       }
     } catch (e) {
-      LogUtil.v("Signaling: Error capturing frame: $e");
+      LogUtil.d("Signaling: Error capturing frame: $e");
     }
   }
 

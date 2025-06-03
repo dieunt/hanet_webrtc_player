@@ -260,11 +260,18 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
             ? Positioned.fill(
                 child: _buildVideoView(),
               )
-            : Container(
-                width: double.infinity,
-                height: double.infinity,
-                child: _buildVideoView(),
+            // : Container(
+            //     width: double.infinity,
+            //     height: double.infinity,
+            //     child: _buildVideoView(),
+            //   ),
+            : Center(
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: _buildVideoView(),
+                ),
               ),
+
         // Controls
         if (widget.showControls)
           _isFullscreen
