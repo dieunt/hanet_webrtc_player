@@ -59,12 +59,15 @@ class _PlayerExampleState extends State<PlayerExample> {
                   showRecord: true,
                   showMic: true,
                   showVolume: true,
-                  source: 'SubStream',
+                  source: 'MainStream',
                   showControls: true,
                   onOffline: () {
                     debugPrint('onOffline');
                   },
                   isDebug: false,
+                  onFullscreen: (isFullscreen) {
+                    debugPrint('onFullscreen: $isFullscreen');
+                  },
                 ),
               ),
             const SizedBox(height: 20),

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb; // Thêm để kiểm tra Web
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -53,7 +53,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeWebRTC();
-    if (!kIsWeb) _resetOrientation(); // Chỉ reset orientation trên Mobile
+    if (!kIsWeb) _resetOrientation();
   }
 
   @override
@@ -63,19 +63,19 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
       _webrtcManager!.dispose();
       _webrtcManager = null;
     }
-    if (!kIsWeb) _resetOrientation(); // Chỉ reset orientation trên Mobile
+    if (!kIsWeb) _resetOrientation();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!kIsWeb && state == AppLifecycleState.resumed) {
-      _resetOrientation(); // Chỉ reset trên Mobile khi resume
+      _resetOrientation();
     }
   }
 
   void _resetOrientation() {
-    if (kIsWeb) return; // Không làm gì trên Web
+    if (kIsWeb) return;
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -117,8 +117,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     _webrtcManager?.onError = (error) {
       if (mounted) {
         setState(() => _isLoading = false);
-        // ScaffoldMessenger.of(context)
-        //     .showSnackBar(SnackBar(content: Text(error)));
         widget.onOffline!();
       }
     };
@@ -184,13 +182,20 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
   Widget _buildVideoView() {
     return Container(
-      color: _isLoading ? const Color(0xFFEEF0F8) : Colors.black,
-      child: _showRemoteVideo && _webrtcManager != null
-          ? RTCVideoView(
+      color: Colors.black, // Always black background
+      child: Stack(
+        children: [
+          if (_showRemoteVideo && _webrtcManager != null)
+            RTCVideoView(
               _webrtcManager!.remoteRenderer,
               objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-            )
-          : const Center(child: CircularProgressIndicator(color: Colors.white)),
+            ),
+          if (!_showRemoteVideo || _webrtcManager == null || _isLoading)
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+        ],
+      ),
     );
   }
 
@@ -255,24 +260,16 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Video view
         _isFullscreen
             ? Positioned.fill(
                 child: _buildVideoView(),
               )
-            // : Container(
-            //     width: double.infinity,
-            //     height: double.infinity,
-            //     child: _buildVideoView(),
-            //   ),
             : Center(
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: _buildVideoView(),
                 ),
               ),
-
-        // Controls
         if (widget.showControls)
           _isFullscreen
               ? Positioned(
