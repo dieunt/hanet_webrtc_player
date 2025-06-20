@@ -14,6 +14,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
   final bool showFullscreen;
   final bool showControls;
   final bool isDebug;
+  final bool isVertical;
   final VoidCallback? onOffline;
   final Function(bool)? onFullscreen;
 
@@ -28,6 +29,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
     this.showFullscreen = true,
     this.showControls = true,
     this.isDebug = false,
+    this.isVertical = false,
     this.onOffline,
     this.onFullscreen,
   }) : super(key: key);
@@ -266,7 +268,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
               )
             : Center(
                 child: AspectRatio(
-                  aspectRatio: 16 / 9,
+                  aspectRatio: widget.isVertical ? 9 / 16 : 16 / 9,
                   child: _buildVideoView(),
                 ),
               ),
