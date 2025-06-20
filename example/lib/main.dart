@@ -61,6 +61,7 @@ class _PlayerExampleState extends State<PlayerExample> {
                   showVolume: true,
                   source: 'MainStream',
                   showControls: true,
+                  isVertical: true,
                   onOffline: () {
                     debugPrint('onOffline');
                   },

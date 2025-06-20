@@ -44,8 +44,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   bool _isMicOn = false;
   bool _isFullscreen = false;
   bool _isRecording = false;
-  bool _showRemoteVideo = false;
-  bool _isLoading = true;
   bool _isDebug = false;
 
   WebRTCManager? _webrtcManager;
@@ -100,25 +98,19 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
     _webrtcManager?.onRemoteStream = (stream) {
       if (mounted && stream != null) {
-        setState(() {
-          _showRemoteVideo = true;
-          _isLoading = false;
-        });
+        setState(() {});
       }
     };
 
     _webrtcManager?.onLocalStream = (stream) {
       if (mounted && stream != null) {
-        setState(() {
-          _showRemoteVideo = true;
-          _isLoading = false;
-        });
+        setState(() {});
       }
     };
 
     _webrtcManager?.onError = (error) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {});
         widget.onOffline!();
       }
     };
@@ -151,10 +143,12 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     setState(() {
       _isFullscreen = !_isFullscreen;
       if (_isFullscreen) {
-        SystemChrome.setPreferredOrientations([
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
-        ]);
+        if (!widget.isVertical) {
+          SystemChrome.setPreferredOrientations([
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]);
+        }
         SystemChrome.setEnabledSystemUIMode(
           SystemUiMode.immersiveSticky,
           overlays: [],
@@ -187,14 +181,13 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
       color: Colors.black, // Always black background
       child: Stack(
         children: [
-          if (_showRemoteVideo && _webrtcManager != null)
+          if (_webrtcManager != null)
             RTCVideoView(
               _webrtcManager!.remoteRenderer,
               objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-            ),
-          if (!_showRemoteVideo || _webrtcManager == null || _isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+              placeholderBuilder: (context) => Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
             ),
         ],
       ),
@@ -260,33 +253,36 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _isFullscreen
-            ? Positioned.fill(
-                child: _buildVideoView(),
-              )
-            : Center(
-                child: AspectRatio(
-                  aspectRatio: widget.isVertical ? 9 / 16 : 16 / 9,
-                  child: _buildVideoView(),
-                ),
-              ),
-        if (widget.showControls)
+    return Container(
+      color: Colors.black, // Always black background
+      child: Stack(
+        children: [
           _isFullscreen
-              ? Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _buildControls(),
+              ? Positioned.fill(
+                  child: _buildVideoView(),
                 )
-              : Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _buildControls(),
+              : Center(
+                  child: AspectRatio(
+                    aspectRatio: widget.isVertical ? 9 / 16 : 16 / 9,
+                    child: _buildVideoView(),
+                  ),
                 ),
-      ],
+          if (widget.showControls)
+            _isFullscreen
+                ? Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _buildControls(),
+                  )
+                : Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _buildControls(),
+                  ),
+        ],
+      ),
     );
   }
 }
