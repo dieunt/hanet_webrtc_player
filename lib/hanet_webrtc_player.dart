@@ -186,7 +186,11 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
               _webrtcManager!.remoteRenderer,
               objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
               placeholderBuilder: (context) => Center(
-                child: CircularProgressIndicator(color: Colors.white),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
               ),
             ),
         ],
