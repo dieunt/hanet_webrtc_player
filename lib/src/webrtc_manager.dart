@@ -85,30 +85,42 @@ class WebRTCManager {
 
     // Set up callbacks
     _signaling?.onLocalStream = (stream) {
-      stream.getAudioTracks().forEach((track) {
-        track.enabled = true;
-        // track.enableSpeakerphone(true);
-      });
-      // _localStream = stream;
-      _localRenderer.srcObject = stream;
-      onLocalStream?.call(stream);
+      try {
+        stream.getAudioTracks().forEach((track) {
+          track.enabled = true;
+          // track.enableSpeakerphone(true);
+        });
+        // _localStream = stream;
+        _localRenderer.srcObject = stream;
+        onLocalStream?.call(stream);
+      } catch (e) {
+        LogUtil.d('Error in onLocalStream: $e');
+      }
     };
 
     _signaling?.onAddRemoteStream = (session, stream) async {
-      stream.getAudioTracks().forEach((track) {
-        track.enabled = false;
-        // track.enableSpeakerphone(true);
-      });
+      try {
+        stream.getAudioTracks().forEach((track) {
+          track.enabled = false;
+          // track.enableSpeakerphone(true);
+        });
 
-      _remoteRenderer.srcObject = stream;
-      onRemoteStream?.call(stream);
+        _remoteRenderer.srcObject = stream;
+        onRemoteStream?.call(stream);
+      } catch (e) {
+        LogUtil.d('Error in onAddRemoteStream: $e');
+      }
     };
 
     _signaling?.onRemoveRemoteStream = (session, stream) {
-      // _remoteStream = null;
-      _remoteRenderer.srcObject = null;
-      onRemoteStream?.call(null);
-      onOffline?.call();
+      try {
+        // _remoteStream = null;
+        _remoteRenderer.srcObject = null;
+        onRemoteStream?.call(null);
+        onOffline?.call();
+      } catch (e) {
+        LogUtil.d('Error in onRemoveRemoteStream: $e');
+      }
     };
 
     _signaling?.onRecordState = (session, state) {
@@ -203,8 +215,11 @@ class WebRTCManager {
   Future<void> dispose() async {
     print('WM: Disposing WebRTCManager');
     _localRenderer.dispose();
+    _localRenderer.srcObject = null;
     _remoteRenderer.dispose();
+    _remoteRenderer.srcObject = null;
     _signaling?.close();
+    _signaling = null;
     _socket?.close();
     onOffline?.call();
 
