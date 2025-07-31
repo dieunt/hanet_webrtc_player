@@ -2,9 +2,9 @@ PODS:
   - Flutter (1.0.0)
   - flutter_image_gallery_saver (0.0.1):
     - Flutter
-  - flutter_webrtc (0.14.0):
+  - flutter_webrtc (0.12.6):
     - Flutter
-    - WebRTC-SDK (= 125.6422.07)
+    - WebRTC-SDK (= 125.6422.06)
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -14,7 +14,7 @@ PODS:
   - video_player_avfoundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - WebRTC-SDK (125.6422.07)
+  - WebRTC-SDK (125.6422.06)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -45,11 +45,11 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_image_gallery_saver: 0453c83412e9691abef94c04c8d180724f5083a8
-  flutter_webrtc: fd0d3bdef8766a0736dbbe2e5b7e85f1f3c52117
+  flutter_webrtc: 57f32415b8744e806f9c2a96ccdb60c6a627ba33
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
-  WebRTC-SDK: dff00a3892bc570b6014e046297782084071657e
+  WebRTC-SDK: 79942c006ea64f6fb48d7da8a4786dfc820bc1db
 
 PODFILE CHECKSUM: 251cb053df7158f337c0712f2ab29f4e0fa474ce
 

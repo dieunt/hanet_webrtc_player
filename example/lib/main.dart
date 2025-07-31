@@ -50,8 +50,8 @@ class _PlayerExampleState extends State<PlayerExample> {
           children: [
             if (_showPlayer)
               Container(
-                width: 450,
-                height: 250,
+                width: 640,
+                height: 360,
                 child: HanetWebRTCPlayer(
                   peerId: 'HANT-00-92HY-VZ65-00002733',
                   showFullscreen: true,
@@ -61,7 +61,7 @@ class _PlayerExampleState extends State<PlayerExample> {
                   showVolume: true,
                   source: 'MainStream',
                   showControls: true,
-                  isVertical: true,
+                  isVertical: false,
                   onOffline: () {
                     debugPrint('onOffline');
                   },

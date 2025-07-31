@@ -60,6 +60,10 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     if (_webrtcManager != null) {
+      _webrtcManager?.remoteRenderer.srcObject = null;
+      _webrtcManager?.localRenderer.srcObject = null;
+      _webrtcManager?.remoteRenderer.dispose();
+      _webrtcManager?.localRenderer.dispose();
       _webrtcManager!.dispose();
       _webrtcManager = null;
     }
@@ -98,6 +102,9 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
     _webrtcManager?.onRemoteStream = (stream) {
       if (mounted && stream != null) {
+        stream.getAudioTracks().forEach((track) {
+          track.enabled = false;
+        });
         setState(() {});
       }
     };

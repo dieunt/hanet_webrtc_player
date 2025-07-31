@@ -101,8 +101,8 @@ class WebRTCManager {
     _signaling?.onAddRemoteStream = (session, stream) async {
       try {
         stream.getAudioTracks().forEach((track) {
-          track.enabled = false;
-          // track.enableSpeakerphone(true);
+          track.enabled = true;
+          track.enableSpeakerphone(true);
         });
 
         _remoteRenderer.srcObject = stream;
@@ -172,8 +172,8 @@ class WebRTCManager {
   /// Toggle volume for remote audio tracks
   void toggleVolume(bool enabled) {
     if (_signaling != null) {
-      // _signaling!.muteSpeakAll(enabled);
-      _signaling!.muteSpeak(_sessionId, enabled);
+      _signaling!.muteSpeakAll(enabled);
+      // _signaling!.muteSpeak(_sessionId, enabled);
     }
   }
 
