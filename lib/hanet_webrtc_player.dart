@@ -111,6 +111,9 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
     _webrtcManager?.onLocalStream = (stream) {
       if (mounted && stream != null) {
+        stream.getAudioTracks().forEach((track) {
+          track.enabled = false;
+        });
         setState(() {});
       }
     };

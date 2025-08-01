@@ -102,7 +102,7 @@ class WebRTCManager {
       try {
         stream.getAudioTracks().forEach((track) {
           track.enabled = true;
-          track.enableSpeakerphone(true);
+          // track.enableSpeakerphone(true);
         });
 
         _remoteRenderer.srcObject = stream;
@@ -214,13 +214,22 @@ class WebRTCManager {
   /// Clean up resources
   Future<void> dispose() async {
     print('WM: Disposing WebRTCManager');
-    _localRenderer.dispose();
-    _localRenderer.srcObject = null;
-    _remoteRenderer.dispose();
-    _remoteRenderer.srcObject = null;
-    _signaling?.close();
-    _signaling = null;
-    _socket?.close();
+    if (_localRenderer.srcObject != null) {
+      _localRenderer.dispose();
+      _localRenderer.srcObject = null;
+    }
+    if (_remoteRenderer.srcObject != null) {
+      _remoteRenderer.dispose();
+      _remoteRenderer.srcObject = null;
+    }
+    if (_signaling != null) {
+      _signaling?.close();
+      _signaling = null;
+    }
+    if (_socket != null) {
+      _socket?.close();
+      _socket = null;
+    }
     onOffline?.call();
 
     // Clean up event bus listeners
