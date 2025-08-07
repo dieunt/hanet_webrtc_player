@@ -213,7 +213,7 @@ class WebRTCManager {
 
   /// Clean up resources
   Future<void> dispose() async {
-    print('WM: Disposing WebRTCManager');
+    // print('WM: Disposing WebRTCManager');
     if (_localRenderer.srcObject != null) {
       _localRenderer.dispose();
       _localRenderer.srcObject = null;
