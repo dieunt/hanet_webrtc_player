@@ -148,7 +148,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
+      // DeviceOrientation.portraitDown,
     ]);
   }
 
@@ -164,7 +164,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
       if (!widget.isVertical) {
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
+          // DeviceOrientation.landscapeRight,
         ]);
       }
       // 3) Let parent know
