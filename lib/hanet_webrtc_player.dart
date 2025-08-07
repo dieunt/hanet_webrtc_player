@@ -78,17 +78,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     }
   }
 
-  void _resetOrientation() {
-    if (kIsWeb) return;
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
-  }
-
   void _initializeWebRTC() {
     _webrtcManager = WebRTCManager(
       peerId: widget.peerId,
@@ -148,6 +137,16 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     });
   }
 
+  void _resetOrientation() {
+    if (kIsWeb) return;
+
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+
   Future<void> _toggleFullscreen() async {
     if (kIsWeb || !widget.showFullscreen) return;
 
@@ -157,18 +156,18 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
     if (_isFullscreen) {
       // 2a) Enter fullscreen: hide overlays first
-      // await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      // // 2b) Then force landscape if you’re in horizontal mode
-      // if (!widget.isVertical) {
-      //   await SystemChrome.setPreferredOrientations([
-      //     DeviceOrientation.landscapeLeft,
-      //     DeviceOrientation.landscapeRight,
-      //   ]);
-      // }
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      // 2b) Then force landscape if you’re in horizontal mode
+      if (!widget.isVertical) {
+        // await SystemChrome.setPreferredOrientations([
+        //   DeviceOrientation.landscapeLeft,
+        //   DeviceOrientation.landscapeRight,
+        // ]);
+      }
       // 3) Let parent know
       widget.onFullscreen?.call(true);
     } else {
-      // _resetOrientation();
+      _resetOrientation();
       widget.onFullscreen?.call(false);
     }
   }
