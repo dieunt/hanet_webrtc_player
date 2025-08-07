@@ -140,11 +140,16 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   void _resetOrientation() {
     if (kIsWeb) return;
 
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    // SystemChrome.setEnabledSystemUIMode(
+    //   SystemUiMode.manual,
+    //   overlays: SystemUiOverlay.values,
+    // );
+
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   }
 
   Future<void> _toggleFullscreen() async {
@@ -155,14 +160,12 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     });
 
     if (_isFullscreen) {
-      // 2a) Enter fullscreen: hide overlays first
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      // 2b) Then force landscape if you’re in horizontal mode
       if (!widget.isVertical) {
-        // await SystemChrome.setPreferredOrientations([
-        //   DeviceOrientation.landscapeLeft,
-        //   DeviceOrientation.landscapeRight,
-        // ]);
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
       }
       // 3) Let parent know
       widget.onFullscreen?.call(true);
