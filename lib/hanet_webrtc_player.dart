@@ -150,25 +150,27 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
 
   Future<void> _toggleFullscreen() async {
     if (kIsWeb || !widget.showFullscreen) return;
+
     setState(() {
       _isFullscreen = !_isFullscreen;
-      if (_isFullscreen) {
-        if (!widget.isVertical) {
-          SystemChrome.setPreferredOrientations([
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ]);
-        }
-        SystemChrome.setEnabledSystemUIMode(
-          SystemUiMode.immersiveSticky,
-          overlays: [],
-        );
-        widget.onFullscreen!(true);
-      } else {
-        _resetOrientation();
-        widget.onFullscreen!(false);
-      }
     });
+
+    if (_isFullscreen) {
+      // 2a) Enter fullscreen: hide overlays first
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      // 2b) Then force landscape if you’re in horizontal mode
+      if (!widget.isVertical) {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      }
+      // 3) Let parent know
+      widget.onFullscreen?.call(true);
+    } else {
+      _resetOrientation();
+      widget.onFullscreen?.call(false);
+    }
   }
 
   Future<void> _startRecording() async {
