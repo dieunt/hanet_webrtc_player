@@ -212,27 +212,27 @@ class WebRTCManager {
 
   /// Clean up resources
   Future<void> dispose() async {
-    // print('WM: Disposing WebRTCManager');
-    if (_localRenderer.srcObject != null) {
-      _localRenderer.dispose();
+    try {
+      // Detach streams from renderers BEFORE disposing them
       _localRenderer.srcObject = null;
-    }
-    if (_remoteRenderer.srcObject != null) {
-      _remoteRenderer.dispose();
       _remoteRenderer.srcObject = null;
-    }
-    if (_signaling != null) {
-      _signaling?.close();
+
+      // Dispose renderers (await because these are Futures)
+      await _localRenderer.dispose();
+      await _remoteRenderer.dispose();
+
+      // Tear down signaling & socket
+      await _signaling?.close();
       _signaling = null;
-    }
-    if (_socket != null) {
+
       _socket?.close();
       _socket = null;
+    } catch (e) {
+      LogUtil.d('WM: dispose error: $e');
+    } finally {
+      onOffline?.call();
+      await _delSessionMsgEvent?.cancel();
+      await _newSessionMsgEvent?.cancel();
     }
-    onOffline?.call();
-
-    // Clean up event bus listeners
-    _delSessionMsgEvent?.cancel();
-    _newSessionMsgEvent?.cancel();
   }
 }

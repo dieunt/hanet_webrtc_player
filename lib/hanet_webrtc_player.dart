@@ -57,23 +57,31 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   @override
   void dispose() {
     try {
+      WidgetsBinding.instance.removeObserver(this);
       _resetOrientation();
-      if (_webrtcManager != null) {
-        _webrtcManager?.remoteRenderer.srcObject = null;
-        _webrtcManager?.localRenderer.srcObject = null;
-        _webrtcManager?.remoteRenderer.dispose();
-        _webrtcManager?.localRenderer.dispose();
-        _webrtcManager!.dispose();
-        _webrtcManager = null;
-      }
+      _webrtcManager?.dispose();
+      _webrtcManager = null;
+    } finally {
       super.dispose();
-    } catch (e) {}
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _resetOrientation();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant HanetWebRTCPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final peerChanged = oldWidget.peerId != widget.peerId;
+    final sourceChanged = oldWidget.source != widget.source;
+
+    if (peerChanged || sourceChanged) {
+      _webrtcManager?.dispose();
+      _initializeWebRTC(); // recreates with new params
     }
   }
 
@@ -109,13 +117,13 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     _webrtcManager?.onError = (error) {
       if (mounted) {
         setState(() {});
-        widget.onOffline!();
+        widget.onOffline?.call();
       }
     };
 
     _webrtcManager?.onOffline = () {
       if (mounted && widget.onOffline != null) {
-        widget.onOffline!();
+        widget.onOffline?.call();
       }
     };
   }
@@ -136,8 +144,8 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     });
   }
 
-  void _resetOrientation() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  Future<void> _resetOrientation() async {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     // SystemChrome.setEnabledSystemUIMode(
     //   SystemUiMode.manual,
     //   overlays: SystemUiOverlay.values,
@@ -146,14 +154,14 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     //   DeviceOrientation.portraitUp,
     //   DeviceOrientation.portraitDown,
     // ]);
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
   Future<void> _toggleFullscreen() async {
     if (!widget.showFullscreen) return;
 
-    setState(() {
-      _isFullscreen = !_isFullscreen;
-    });
+    final goingFull = !_isFullscreen;
+    setState(() => _isFullscreen = goingFull);
 
     if (_isFullscreen) {
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -166,7 +174,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
       // 3) Let parent know
       widget.onFullscreen?.call(true);
     } else {
-      _resetOrientation();
+      await _resetOrientation();
       widget.onFullscreen?.call(false);
     }
   }
