@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -44,7 +43,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   bool _isMicOn = false;
   bool _isFullscreen = false;
   bool _isRecording = false;
-  bool _isDebug = false;
 
   WebRTCManager? _webrtcManager;
 
@@ -53,27 +51,28 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeWebRTC();
-    if (!kIsWeb) _resetOrientation();
+    _resetOrientation();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    if (_webrtcManager != null) {
-      // _webrtcManager?.remoteRenderer.srcObject = null;
-      // _webrtcManager?.localRenderer.srcObject = null;
-      // _webrtcManager?.remoteRenderer.dispose();
-      // _webrtcManager?.localRenderer.dispose();
-      _webrtcManager!.dispose();
-      _webrtcManager = null;
-    }
-    if (!kIsWeb) _resetOrientation();
-    super.dispose();
+    try {
+      _resetOrientation();
+      if (_webrtcManager != null) {
+        _webrtcManager?.remoteRenderer.srcObject = null;
+        _webrtcManager?.localRenderer.srcObject = null;
+        _webrtcManager?.remoteRenderer.dispose();
+        _webrtcManager?.localRenderer.dispose();
+        _webrtcManager!.dispose();
+        _webrtcManager = null;
+      }
+      super.dispose();
+    } catch (e) {}
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!kIsWeb && state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed) {
       _resetOrientation();
     }
   }
@@ -122,7 +121,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _toggleVolume() {
-    if (!widget.showVolume) return;
+    // if (!widget.showVolume) return;
     setState(() {
       _isVolumeOn = !_isVolumeOn;
       _webrtcManager?.toggleVolume(_isVolumeOn);
@@ -130,7 +129,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _toggleMic() {
-    if (!widget.showMic) return;
+    // if (!widget.showMic) return;
     setState(() {
       _isMicOn = !_isMicOn;
       _webrtcManager?.toggleMic(_isMicOn);
@@ -138,14 +137,11 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   void _resetOrientation() {
-    if (kIsWeb) return;
-
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     // SystemChrome.setEnabledSystemUIMode(
     //   SystemUiMode.manual,
     //   overlays: SystemUiOverlay.values,
     // );
-
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     // SystemChrome.setPreferredOrientations([
     //   DeviceOrientation.portraitUp,
     //   DeviceOrientation.portraitDown,
@@ -153,7 +149,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
   }
 
   Future<void> _toggleFullscreen() async {
-    if (kIsWeb || !widget.showFullscreen) return;
+    if (!widget.showFullscreen) return;
 
     setState(() {
       _isFullscreen = !_isFullscreen;
@@ -256,7 +252,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer>
               ),
               onPressed: _isRecording ? _stopRecording : _startRecording,
             ),
-          if (widget.showFullscreen && !kIsWeb)
+          if (widget.showFullscreen)
             IconButton(
               icon: Icon(
                 _isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,

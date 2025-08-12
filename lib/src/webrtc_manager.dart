@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-// import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:uuid/uuid.dart';
 import 'signaling.dart';
