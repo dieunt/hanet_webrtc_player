@@ -53,13 +53,13 @@ class _PlayerExampleState extends State<PlayerExample> {
                 width: 640,
                 height: 360,
                 child: HanetWebRTCPlayer(
-                  peerId: 'HANT-00-92HY-VZ65-00002733',
+                  peerId: 'HANT-00-S3DH-K2ZQ-00002744',
                   showFullscreen: true,
                   showCapture: true,
                   showRecord: true,
                   showMic: true,
                   showVolume: true,
-                  source: 'MainStream',
+                  source: 'SubStream',
                   showControls: true,
                   isVertical: false,
                   onOffline: () {
