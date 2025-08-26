@@ -1,8 +1,5 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 class VideoInfo {
-  String? _title;
+  // String? _title;
 
   String get title {
     switch (event) {

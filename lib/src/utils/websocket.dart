@@ -1,111 +1,75 @@
+import 'dart:io';
+import 'dart:math';
+import 'dart:convert';
 import 'dart:async';
-import 'websocket_base.dart';
-import 'websocket_native.dart' if (dart.library.html) 'websocket_web.dart';
-import 'utils.dart'; // Import LogUtil từ utils
 
-class WebSocket {
-  final String url;
-  WebSocketBase? _webSocket;
-  Timer? _reconnectTimer;
-  Timer? _heartbeatTimer;
-  bool _isConnecting = false;
-  int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 5;
-  static const Duration _reconnectDelay = Duration(seconds: 5);
-  static const Duration _heartbeatInterval = Duration(seconds: 30);
-
-  WebSocket(this.url);
-
+class SimpleWebSocket {
+  String _url;
+  var _socket;
   Function()? onOpen;
   Function(dynamic msg)? onMessage;
-  Function(int code, String reason)? onClose;
+  Function(int code, String reaso)? onClose;
+  SimpleWebSocket(this._url);
 
-  Future<void> connect() async {
-    if (_isConnecting) return;
-    _isConnecting = true;
-
+  connect() async {
     try {
-      _webSocket = PlatformWebSocket(url);
-      _webSocket?.onOpen = () {
-        _startHeartbeat();
-        _reconnectAttempts = 0; // Reset attempts khi kết nối thành công
-        onOpen?.call();
-      };
-      _webSocket?.onMessage = onMessage;
-      _webSocket?.onClose = (code, reason) {
-        _stopHeartbeat();
-        onClose?.call(code, reason);
-        if (code == 500) {
-          _reconnect();
-        }
-      };
-      await _webSocket?.connect();
+      //_socket = await WebSocket.connect(_url);
+      _socket = await _connectForSelfSignedCert(_url);
+      onOpen?.call();
+      _socket.listen((data) {
+        onMessage?.call(data);
+      }, onDone: () {
+        print('Closed by server');
+        onClose?.call(_socket.closeCode, _socket.closeReason??"null");
+      });
     } catch (e) {
-      LogUtil.d('Failed to connect to WebSocket: $e');
-      _reconnect();
-    } finally {
-      _isConnecting = false;
+      onClose?.call(500, e.toString());
     }
   }
 
-  void _startHeartbeat() {
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(_heartbeatInterval, (timer) {
-      if (isConnected) {
-        send('ping');
-        LogUtil.d('Heartbeat sent: ping');
-      } else {
-        _stopHeartbeat();
-      }
-    });
-  }
-
-  void _stopHeartbeat() {
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = null;
-  }
-
-  void _reconnect() {
-    if (_reconnectAttempts >= _maxReconnectAttempts) {
-      LogUtil.d('Max reconnection attempts reached ($_maxReconnectAttempts)');
-      return;
+  send(data) {
+    if (_socket != null) {
+      _socket.add(data);
+     // print('send: $data');
     }
-
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(_reconnectDelay, () {
-      _reconnectAttempts++;
-      LogUtil.d('Reconnecting... Attempt $_reconnectAttempts');
-      connect();
-    });
   }
 
-  void send(dynamic data) {
-    _webSocket?.send(data);
+  close() {
+    if (_socket != null) _socket.close();
   }
 
-  void close() {
-    _stopHeartbeat();
-    _reconnectTimer?.cancel();
-    _webSocket?.close();
-  }
+  Future<WebSocket> _connectForSelfSignedCert(url) async {
+    try {
+      Random r = new Random();
+      String key = base64.encode(List<int>.generate(8, (_) => r.nextInt(255)));
+      HttpClient client = HttpClient(context: SecurityContext());
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) {
+        print(
+            'SimpleWebSocket: Allow self-signed certificate => $host:$port. ');
+        return true;
+      };
 
-  bool get isConnected => _webSocket?.isConnected ?? false;
+      HttpClientRequest request =
+          await client.getUrl(Uri.parse(url)); // form the correct url here
+      request.headers.add('Connection', 'Upgrade');
+      request.headers.add('Upgrade', 'websocket');
+      request.headers.add(
+          'Sec-WebSocket-Version', '13'); // insert the correct version here
+      request.headers.add('Sec-WebSocket-Key', key.toLowerCase());
 
-  void listen(
-    void Function(dynamic) onData, {
-    Function? onError,
-    void Function()? onDone,
-  }) {
-    _webSocket?.listen(
-      onData,
-      onError: onError,
-      onDone: onDone,
-    );
-  }
+      HttpClientResponse response = await request.close();
+      // ignore: close_sinks
+      Socket socket = await response.detachSocket();
+      var webSocket = WebSocket.fromUpgradedSocket(
+        socket,
+        protocol: 'signaling',
+        serverSide: false,
+      );
 
-  void dispose() {
-    _stopHeartbeat();
-    _reconnectTimer?.cancel();
-    close();
+      return webSocket;
+    } catch (e) {
+      throw e;
+    }
   }
 }

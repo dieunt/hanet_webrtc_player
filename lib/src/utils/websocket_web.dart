@@ -1,75 +1,48 @@
-import 'dart:async';
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
-import 'websocket_base.dart';
-import 'utils.dart'; // Import LogUtil từ utils
+import 'dart:html';
 
-class PlatformWebSocket implements WebSocketBase {
-  final String _url;
-  html.WebSocket? _webSocket;
-
-  PlatformWebSocket(String url) : _url = url.replaceAll('https:', 'wss:');
-
-  @override
+class SimpleWebSocket {
+  String _url;
+  var _socket;
   Function()? onOpen;
-
-  @override
   Function(dynamic msg)? onMessage;
-
-  @override
   Function(int code, String reason)? onClose;
 
-  @override
-  Future<void> connect() async {
+  SimpleWebSocket(this._url) {
+    _url = _url.replaceAll('https:', 'wss:');
+  }
+
+  connect() async {
     try {
-      _webSocket = html.WebSocket(_url);
-      _webSocket?.onOpen.listen((_) {
+      _socket = WebSocket(_url);
+      _socket.onOpen.listen((e) {
         onOpen?.call();
       });
 
-      _webSocket?.onMessage.listen((event) {
-        onMessage?.call(event.data);
+      _socket.onMessage.listen((e) {
+        onMessage?.call(e.data);
       });
 
-      _webSocket?.onClose.listen((event) {
-        onClose?.call(event.code ?? 1000, event.reason ?? 'Connection closed');
-      });
-
-      _webSocket?.onError.listen((event) {
-        onClose?.call(500, 'WebSocket error: $event');
+      _socket.onClose.listen((e) {
+        onClose?.call(e.code, e.reason);
       });
     } catch (e) {
       onClose?.call(500, e.toString());
     }
   }
 
-  @override
-  void send(dynamic data) {
-    if (_webSocket != null && _webSocket?.readyState == html.WebSocket.OPEN) {
-      _webSocket?.send(data);
+  send(data) {
+    if (_socket != null && _socket.readyState == WebSocket.OPEN) {
+      _socket.send(data);
+      print('send: $data');
     } else {
-      LogUtil.d('WebSocket not connected, message $data not sent');
+      print('WebSocket not connected, message $data not sent');
     }
   }
 
-  @override
-  void close() {
-    _webSocket?.close();
-  }
-
-  @override
-  bool get isConnected => _webSocket?.readyState == html.WebSocket.OPEN;
-
-  @override
-  void listen(
-    void Function(dynamic) onData, {
-    Function? onError,
-    void Function()? onDone,
-  }) {
-    _webSocket?.onMessage.listen(
-      (event) => onData(event.data),
-      onError: onError,
-      onDone: onDone,
-    );
+  close() {
+    if (_socket != null) {
+      _socket.close();
+    }
   }
 }

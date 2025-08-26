@@ -50,10 +50,10 @@ class _PlayerExampleState extends State<PlayerExample> {
           children: [
             if (_showPlayer)
               Container(
-                width: 640,
-                height: 360,
+                // width: 640,
+                // height: 360,
                 child: HanetWebRTCPlayer(
-                  peerId: 'HANT-00-S3DH-K2ZQ-00002744',
+                  peerId: 'HANT-00-TLV3-8V2G-00000109',
                   showFullscreen: true,
                   showCapture: true,
                   showRecord: true,

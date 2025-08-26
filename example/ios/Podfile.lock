@@ -1,40 +1,61 @@
 PODS:
   - Flutter (1.0.0)
+  - flutter_blue (0.0.1):
+    - Flutter
+    - flutter_blue/Protos (= 0.0.1)
+  - flutter_blue/Protos (0.0.1):
+    - Flutter
+    - Protobuf (~> 3.11.4)
   - flutter_image_gallery_saver (0.0.1):
     - Flutter
-  - flutter_webrtc (0.12.6):
+  - flutter_mdns_plugin (0.0.1):
     - Flutter
-    - WebRTC-SDK (= 125.6422.06)
+  - flutter_webrtc (0.0.1):
+    - Flutter
+    - Libyuv (= 1703)
+  - image_gallery_saver (1.5.0):
+    - Flutter
+  - Libyuv (1703)
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - Protobuf (3.11.4)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
   - video_player_avfoundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - WebRTC-SDK (125.6422.06)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - flutter_blue (from `.symlinks/plugins/flutter_blue/ios`)
   - flutter_image_gallery_saver (from `.symlinks/plugins/flutter_image_gallery_saver/ios`)
+  - flutter_mdns_plugin (from `.symlinks/plugins/flutter_mdns_plugin/ios`)
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
+  - image_gallery_saver (from `.symlinks/plugins/image_gallery_saver/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
 
 SPEC REPOS:
   trunk:
-    - WebRTC-SDK
+    - Libyuv
+    - Protobuf
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  flutter_blue:
+    :path: ".symlinks/plugins/flutter_blue/ios"
   flutter_image_gallery_saver:
     :path: ".symlinks/plugins/flutter_image_gallery_saver/ios"
+  flutter_mdns_plugin:
+    :path: ".symlinks/plugins/flutter_mdns_plugin/ios"
   flutter_webrtc:
     :path: ".symlinks/plugins/flutter_webrtc/ios"
+  image_gallery_saver:
+    :path: ".symlinks/plugins/image_gallery_saver/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   shared_preferences_foundation:
@@ -43,13 +64,17 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/video_player_avfoundation/darwin"
 
 SPEC CHECKSUMS:
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_blue: 98e9bec352ab6584a882536c31c7610f7102b3f0
   flutter_image_gallery_saver: 0453c83412e9691abef94c04c8d180724f5083a8
-  flutter_webrtc: 57f32415b8744e806f9c2a96ccdb60c6a627ba33
+  flutter_mdns_plugin: 2c0b5650c437d2602487f1ac274eed5dfa4542ff
+  flutter_webrtc: 4c3c22348cc2d0c99f62cfc61e4e473da5056d40
+  image_gallery_saver: 50ed0238a5f3747c340f4357c21e8c54b7ead376
+  Libyuv: 5f79ced0ee66e60a612ca97de1e6ccacd187a437
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  Protobuf: 176220c526ad8bd09ab1fb40a978eac3fef665f7
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
-  WebRTC-SDK: 79942c006ea64f6fb48d7da8a4786dfc820bc1db
 
 PODFILE CHECKSUM: 251cb053df7158f337c0712f2ab29f4e0fa474ce
 
