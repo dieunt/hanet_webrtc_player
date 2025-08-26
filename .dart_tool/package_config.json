@@ -129,7 +129,7 @@
     },
     {
       "name": "flutter_webrtc",
-      "rootUri": "../flutter_webrtc",
+      "rootUri": "file:///Users/hanet/.pub-cache/git/flutter_webrtc-dff3a3d8d18eb25fc872824ad474072a5142a80b/",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -455,7 +455,7 @@
       "name": "hanet_webrtc_player",
       "rootUri": "../",
       "packageUri": "lib/",
-      "languageVersion": "3.9"
+      "languageVersion": "3.0"
     }
   ],
   "generator": "pub",

@@ -26,9 +26,9 @@ public final class GeneratedPluginRegistrant {
       Log.e(TAG, "Error registering plugin flutter_image_gallery_saver, dev.knottx.flutter_image_gallery_saver.FlutterImageGallerySaverPlugin", e);
     }
     try {
-      flutterEngine.getPlugins().add(new com.rhrtc.flutter_webrtc.FlutterWebRTCPlugin());
+      flutterEngine.getPlugins().add(new com.hanet.flutter_webrtc.FlutterWebRTCPlugin());
     } catch (Exception e) {
-      Log.e(TAG, "Error registering plugin flutter_webrtc, com.rhrtc.flutter_webrtc.FlutterWebRTCPlugin", e);
+      Log.e(TAG, "Error registering plugin flutter_webrtc, com.hanet.flutter_webrtc.FlutterWebRTCPlugin", e);
     }
     try {
       flutterEngine.getPlugins().add(new com.example.imagegallerysaver.ImageGallerySaverPlugin());
