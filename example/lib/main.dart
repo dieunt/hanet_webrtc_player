@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hanet_webrtc_player/hanet_webrtc_player.dart';
+import 'package:hanet_webrtc_player/hanet_webrtc_multiple.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +32,9 @@ class PlayerExample extends StatefulWidget {
 
 class _PlayerExampleState extends State<PlayerExample> {
   bool _showPlayer = true;
+  bool _showMultiplePlayer = false;
   Key? _playerKey = UniqueKey();
+  Key? _multiplePlayerKey = UniqueKey();
 
   void _togglePlayer() {
     setState(() {
@@ -40,6 +43,17 @@ class _PlayerExampleState extends State<PlayerExample> {
         _playerKey = UniqueKey();
       } else {
         _playerKey = null;
+      }
+    });
+  }
+
+  void _toggleMultiplePlayer() {
+    setState(() {
+      _showMultiplePlayer = !_showMultiplePlayer;
+      if (_showMultiplePlayer) {
+        _multiplePlayerKey = UniqueKey();
+      } else {
+        _multiplePlayerKey = null;
       }
     });
   }
@@ -79,9 +93,36 @@ class _PlayerExampleState extends State<PlayerExample> {
                 ),
               ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _togglePlayer,
-              child: const Text('Dispose Player'),
+            if (_showMultiplePlayer)
+              Container(
+                width: MediaQuery.of(context).size.width,
+                height: 400,
+                child: HanetWebRTCMultiple(
+                  key: _multiplePlayerKey,
+                  peerIds: const [
+                    'HANT-00-TLV3-8V2G-00000109',
+                    'HANT-00-TLV3-8V2G-00000110',
+                    'HANT-00-TLV3-8V2G-00000111',
+                    'HANT-00-TLV3-8V2G-00000112',
+                  ],
+                  onOffline: () {
+                    debugPrint('Multiple player offline');
+                  },
+                ),
+              ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _togglePlayer,
+                  child: const Text('Toggle Single Player'),
+                ),
+                ElevatedButton(
+                  onPressed: _toggleMultiplePlayer,
+                  child: const Text('Toggle Multiple Players'),
+                ),
+              ],
             ),
           ],
         ),

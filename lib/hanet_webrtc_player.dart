@@ -63,8 +63,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
 
   // UI controller variable
   RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
-  bool _isVolumeOn = false;
-  bool _isMicOn = false;
   bool _isFullscreen = false;
   bool _isRecording = false;
 
@@ -86,7 +84,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   // WebRTC variable
   bool _inited = false;
   bool _recording = false;
-  bool _showremotevideo = false;
   bool _inCalling = false;
   bool _mic_mute = false;
   bool _speek_mute = false;
@@ -95,7 +92,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   bool _video = true;
   bool _audio = true;
   bool _datachannel = true;
-  bool _dataChannelOpened = false;
   bool _can_add_candidate = false;
 
   int sendsequence = 0;
@@ -139,11 +135,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     ],
   };
 
-  final Map<String, dynamic> _dcConstraints = {
-    'mandatory': {'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true, 'iceRestart': true},
-    'optional': [],
-  };
-
   // WebRTC DataChannel variable
   // bool _sendDataChannelMsg = false;
   Timer? myTimer;
@@ -167,16 +158,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
 
       // first init WebSocket
       _webSocketConnect();
-
-      // then init WebRTC
-      // _initWebrtc();
-
-      // then init Timer to send DataChannel message
-      myTimer = Timer.periodic(const Duration(seconds: 5), (Timer t) {
-        //   if (_sendDataChannelMsg) {
-        //     _send_datachennel_msg_ex();
-        //   }
-      });
     }
   }
 
@@ -195,12 +176,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     _socket?.onClose = (int code, String reason) {
       LogUtil.d('websocketconnect::onClose');
       Timer(const Duration(seconds: 5), () {
-        // _closeSession();
-        // _socket?.close();
-        // eventBus.off(_sendMsgEvent);
-        // eventBus.off(_delSessionMsgEvent);
-        // eventBus.off(_newSessionMsgEvent);
-        // eventBus.off(_recvMsgEvent);
         _webSocketConnect();
       });
     };
@@ -208,8 +183,8 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     // onMessage
     _socket?.onMessage = (message) {
       // LogUtil.d('websocketconnect::onMessage: $message');
-      Map<String, dynamic> mapData = _decoder.convert(message);
-      var eventName = mapData['eventName'];
+      // Map<String, dynamic> mapData = _decoder.convert(message);
+      // var eventName = mapData['eventName'];
       // var data = mapData['data'];
       // switch (eventName) {
       //   case '_ring':
@@ -243,7 +218,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     _remoteRenderer.onFirstFrameRendered = () {
       LogUtil.d('-----------onFirstFrameRendered-----------');
       setState(() {
-        _showremotevideo = true;
         _inCalling = true;
       });
     };
@@ -863,7 +837,6 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         LogUtil.d("datachennel :open");
         LogUtil.d(channel.label);
         LogUtil.d(channel.id);
-        _dataChannelOpened = true;
         dc = channel;
         // _send_datachennel_msg_ex();
       } else if (e == RTCDataChannelState.RTCDataChannelClosing) {
