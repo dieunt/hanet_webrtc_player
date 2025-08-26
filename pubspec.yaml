@@ -13,7 +13,11 @@ dependencies:
     sdk: flutter
   # flutter_webrtc: 0.12.12+hotfix.1
   flutter_webrtc:
-    path:  ./flutter_webrtc
+    git:
+      url: https://github.com/dieunt/hanet_webrtc_player.git
+      ref: 0.0.3-fix32     # branch/tag/commit of the repo
+      path: flutter_webrtc # subdirectory where the plugin lives
+    # path:  ./flutter_webrtc
   flutter_blue: ^0.8.0
   flutter_mdns_plugin: ^0.0.3
   shared_preferences: ^2.0.9
