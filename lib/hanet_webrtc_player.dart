@@ -895,6 +895,13 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _closeSession();
+    _socket?.close();
+    eventBus.off(_sendMsgEvent);
+    eventBus.off(_delSessionMsgEvent);
+    eventBus.off(_newSessionMsgEvent);
+    eventBus.off(_recvMsgEvent);
     super.dispose();
   }
 
