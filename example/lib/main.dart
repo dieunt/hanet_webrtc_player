@@ -31,10 +31,16 @@ class PlayerExample extends StatefulWidget {
 
 class _PlayerExampleState extends State<PlayerExample> {
   bool _showPlayer = true;
+  Key? _playerKey = UniqueKey();
 
   void _togglePlayer() {
     setState(() {
-      _showPlayer = false;
+      _showPlayer = !_showPlayer;
+      if (_showPlayer) {
+        _playerKey = UniqueKey();
+      } else {
+        _playerKey = null;
+      }
     });
   }
 
@@ -53,13 +59,14 @@ class _PlayerExampleState extends State<PlayerExample> {
                 // width: 640,
                 // height: 360,
                 child: HanetWebRTCPlayer(
+                  key: _playerKey,
                   peerId: 'HANT-00-TLV3-8V2G-00000109',
                   showFullscreen: true,
                   showCapture: true,
                   showRecord: true,
                   showMic: true,
                   showVolume: true,
-                  source: 'SubStream',
+                  source: 'MainStream',
                   showControls: true,
                   isVertical: false,
                   onOffline: () {

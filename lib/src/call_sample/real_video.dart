@@ -334,7 +334,7 @@ class _RealVideoState extends State<RealVideo> with WidgetsBindingObserver {
           }
           var peerId = data['from'];
           var sdp = data['sdp'];
-          LogUtil.v("_offer $sdp");
+          LogUtil.d("_offer $sdp");
           var datachannel = data['datachannel'];
           var audiodir = data['audio'];
           var videodir = data['video'];
@@ -411,7 +411,7 @@ class _RealVideoState extends State<RealVideo> with WidgetsBindingObserver {
         {
           var type = data['type'];
           var sdp = data['sdp'];
-          LogUtil.v("_answer $sdp");
+          LogUtil.d("_answer $sdp");
           var sessionId = data['sessionId'];
           if (compare(sessionId, _SessionId) == 0) {
             pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
@@ -1124,7 +1124,7 @@ class _RealVideoState extends State<RealVideo> with WidgetsBindingObserver {
         _onlydatachnannel ? {} : dcConstraints,
       );
       await pc!.setLocalDescription(s);
-      LogUtil.v("_createOffer ${s.sdp}");
+      LogUtil.d("_createOffer ${s.sdp}");
 
       var datachanneldir = 'true';
       var audiodir = 'sendrecv';
@@ -1183,7 +1183,7 @@ class _RealVideoState extends State<RealVideo> with WidgetsBindingObserver {
       print(
         '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> send answer  use time  :$delay',
       );
-      LogUtil.v("_createAnswer ${s.sdp}");
+      LogUtil.d("_createAnswer ${s.sdp}");
       websocket_send('__answer', {
         "type": s.type,
         "sdp": s.sdp,

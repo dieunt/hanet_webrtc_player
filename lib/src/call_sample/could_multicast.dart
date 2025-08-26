@@ -303,7 +303,7 @@ class _CouldMulticastPlayerState extends State<CouldMulticastPlayer> {
 
       await peerConnection.setLocalDescription(s);
 
-      LogUtil.v("_createAnswer ${s.sdp}");
+      LogUtil.d("_createAnswer ${s.sdp}");
       _websocket_send('__answer', {
         "type": s.type,
         "sdp": s.sdp,

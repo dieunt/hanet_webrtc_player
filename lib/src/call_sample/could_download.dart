@@ -380,7 +380,7 @@ class _CouldDownloadState extends State<CouldDownload> {
 
       await peerConnection.setLocalDescription(s);
 
-      LogUtil.v("_createAnswer ${s.sdp}");
+      LogUtil.d("_createAnswer ${s.sdp}");
       _websocket_send('__could_download_answer', {
         "type": s.type,
         "sdp": s.sdp,

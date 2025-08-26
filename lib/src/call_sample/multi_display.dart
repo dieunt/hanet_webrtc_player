@@ -502,7 +502,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
             MultiDisplaySession sess = _sessions[i];
             if (sess.sid == sessionId) {
               var sdp = data['sdp'];
-              LogUtil.v("_offer $sdp");
+              LogUtil.d("_offer $sdp");
               await _createPeerConnectionByOffer(sess, true, true, true, sdp);
             }
           }
@@ -704,7 +704,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
 
       await pc.setLocalDescription(s);
 
-      //LogUtil.v("_createAnswer ${s.sdp}");
+      //LogUtil.d("_createAnswer ${s.sdp}");
       websocket_send('__answer', {
         "type": s.type,
         "sdp": s.sdp,

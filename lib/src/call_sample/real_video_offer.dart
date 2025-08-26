@@ -288,7 +288,7 @@ class _RealOfferVideoState extends State<RealOfferVideo> {
           }
           var peerId = data['from'];
           var sdp = data['sdp'];
-          LogUtil.v("_offer $sdp");
+          LogUtil.d("_offer $sdp");
           var datachannel = data['datachannel'];
           var audiodir = data['audio'];
           var videodir = data['video'];
@@ -364,7 +364,7 @@ class _RealOfferVideoState extends State<RealOfferVideo> {
         {
           var type = data['type'];
           var sdp = data['sdp'];
-          LogUtil.v("_answer $sdp");
+          LogUtil.d("_answer $sdp");
           var sessionId = data['sessionId'];
           if (compare(sessionId, _SessionId) == 0) {
             pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
@@ -980,7 +980,7 @@ class _RealOfferVideoState extends State<RealOfferVideo> {
   Future<void> sendOfferNoTrickle() async {
      try {
        RTCSessionDescription? s =await pc!.getLocalDescription();
-       LogUtil.v("sendOfferNoTrickle ${s!.sdp}");
+       LogUtil.d("sendOfferNoTrickle ${s!.sdp}");
             var iceServers = _iceServers_peer;
             if(iceServers.length == 0){
               iceServers = _iceServers;
@@ -1045,7 +1045,7 @@ class _RealOfferVideoState extends State<RealOfferVideo> {
       await pc!.setLocalDescription(s);
       print('_createOffer ');
       if(_offer_non_trickle == false){
-            LogUtil.v("_createOffer ${s.sdp}");
+            LogUtil.d("_createOffer ${s.sdp}");
           var iceServers = _iceServers_peer;
             if(iceServers.length == 0){
               iceServers = _iceServers;
@@ -1106,7 +1106,7 @@ class _RealOfferVideoState extends State<RealOfferVideo> {
       var delay = currentTimeMillis() - _start_time_;
       print(
           '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> send answer  use time  :$delay');
-      LogUtil.v("_createAnswer ${s.sdp}");
+      LogUtil.d("_createAnswer ${s.sdp}");
       websocket_send('__answer', {
         "type": s.type,
         "sdp": s.sdp,

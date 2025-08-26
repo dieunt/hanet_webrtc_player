@@ -157,9 +157,10 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     _selfId = randomNumeric(32);
     _serverUrl = WSS_SERVER_URL + _selfId!;
 
+    LogUtil.init(isDebug: true);
+
     if (_inited == false) {
       _inited = true;
-
       _getAppDocPath();
       _initEventBus();
       _initRenderers();
@@ -182,38 +183,47 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   /// ******************************************************
   /// WebSocket Connection Handler Start
   Future<void> _webSocketConnect() async {
-    LogUtil.v('websocketconnect:: _serverUrl: $_serverUrl');
+    LogUtil.d('websocketconnect:: _serverUrl: $_serverUrl');
     _socket = ProxyWebsocket(_serverUrl);
     // onOpen
     _socket?.onOpen = () {
-      LogUtil.v('websocketconnect::onOpen');
+      LogUtil.d('websocketconnect::onOpen');
       connect();
     };
 
     // onClose
     _socket?.onClose = (int code, String reason) {
-      Timer(const Duration(seconds: 5), () => _webSocketConnect());
+      LogUtil.d('websocketconnect::onClose');
+      Timer(const Duration(seconds: 5), () {
+        // _closeSession();
+        // _socket?.close();
+        // eventBus.off(_sendMsgEvent);
+        // eventBus.off(_delSessionMsgEvent);
+        // eventBus.off(_newSessionMsgEvent);
+        // eventBus.off(_recvMsgEvent);
+        _webSocketConnect();
+      });
     };
 
     // onMessage
     _socket?.onMessage = (message) {
-      LogUtil.v('websocketconnect::onMessage: $message');
+      // LogUtil.d('websocketconnect::onMessage: $message');
       Map<String, dynamic> mapData = _decoder.convert(message);
       var eventName = mapData['eventName'];
       // var data = mapData['data'];
-      switch (eventName) {
-        case '_ring':
-          break;
-        case '_call':
-          eventBus.emit(ReciveMsgEvent(message));
-          break;
-        case '_offer':
-          eventBus.emit(ReciveMsgEvent(message));
-          break;
-        default:
-          eventBus.emit(ReciveMsgEvent(message));
-          break;
-      }
+      // switch (eventName) {
+      //   case '_ring':
+      //     break;
+      //   case '_call':
+      //     eventBus.emit(ReciveMsgEvent(message));
+      //     break;
+      //   case '_offer':
+      //     eventBus.emit(ReciveMsgEvent(message));
+      //     break;
+      //   default:
+      eventBus.emit(ReciveMsgEvent(message));
+      //     break;
+      // }
     };
 
     await _socket?.connect();
@@ -231,7 +241,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   _initRenderers() async {
     await _remoteRenderer.initialize();
     _remoteRenderer.onFirstFrameRendered = () {
-      LogUtil.v('-----------onFirstFrameRendered-----------');
+      LogUtil.d('-----------onFirstFrameRendered-----------');
       setState(() {
         _showremotevideo = true;
         _inCalling = true;
@@ -251,7 +261,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   }
 
   void onMessage(message) async {
-    LogUtil.v('onMessage recv $message');
+    // LogUtil.d('onMessage recv $message');
     Map<String, dynamic> mapData = _decoder.convert(message);
     var data = mapData['data'];
     var eventName = mapData['eventName'];
@@ -268,7 +278,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
           var domainNameiceServers = data['domainnameiceServers'];
           if (domainNameiceServers != null) {
             if (domainNameiceServers is String) {
-              LogUtil.v('_create domainNameiceServers $domainNameiceServers');
+              LogUtil.d('_create domainNameiceServers $domainNameiceServers');
               _iceServers = _decoder.convert(domainNameiceServers);
             } else {
               var subiceServers = domainNameiceServers['iceServers'];
@@ -292,7 +302,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
           } else {
             if (iceServers != null) {
               if (iceServers is String) {
-                LogUtil.v('_create iceServers $iceServers');
+                LogUtil.d('_create iceServers $iceServers');
                 _iceServers = _decoder.convert(iceServers);
               } else {
                 var subiceServers = iceServers['iceServers'];
@@ -330,7 +340,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
 
           var iceServers = data['iceservers'];
           if (iceServers != null) {
-            LogUtil.v('_call iceServers ----------=$iceServers');
+            LogUtil.d('_call iceServers ----------=$iceServers');
             _iceServers = _decoder.convert(iceServers);
           }
 
@@ -385,7 +395,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
       case '_offer':
         {
           var delay = currentTimeMillis() - _startTime;
-          LogUtil.v('<<<<<<<<<<<<<<<<<<<<<<<<<  recv offer use time  :$delay');
+          LogUtil.d('<<<<<<<<<<<<<<<<<<<<<<<<<  recv offer use time  :$delay');
 
           var iceServers = data['iceservers'];
           if (iceServers != null && iceServers.toString().isNotEmpty) {
@@ -394,7 +404,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
 
           var peerId = data['from'];
           var sdp = data['sdp'];
-          LogUtil.v("_offer $sdp");
+          LogUtil.d("_offer $sdp");
           var datachannel = data['datachannel'];
           var audiodir = data['audio'];
           var videodir = data['video'];
@@ -460,7 +470,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
           if (remoteCandidates.isNotEmpty) {
             remoteCandidates.forEach((candidate) async {
               var candi = candidate.candidate;
-              LogUtil.v('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  recv offer addCandidate --- $candi');
+              LogUtil.d('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  recv offer addCandidate --- $candi');
               await pc?.addCandidate(candidate);
             });
             remoteCandidates.clear();
@@ -471,7 +481,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         {
           var type = data['type'];
           var sdp = data['sdp'];
-          LogUtil.v("_answer $sdp");
+          LogUtil.d("_answer $sdp");
           var sessionId = data['sessionId'];
           if (compare(sessionId, _sessionId) == 0) {
             pc?.setRemoteDescription(RTCSessionDescription(sdp, type));
@@ -489,14 +499,14 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
           var ssdpMid = candidateobject['sdpMid'];
           var sessionId = data['sessionId'];
           if (compare(sessionId, _sessionId) == 0) {
-            LogUtil.v('recv candidate-<<<-----------sdpMLineIndex :$nsdpMLineIndex sdpMid: $ssdpMid candidate: $scandidate');
+            LogUtil.d('recv candidate-<<<-----------sdpMLineIndex :$nsdpMLineIndex sdpMid: $ssdpMid candidate: $scandidate');
             RTCIceCandidate candidate = RTCIceCandidate(scandidate, ssdpMid, nsdpMLineIndex);
 
             if (_can_add_candidate == true) {
-              LogUtil.v('addCandidate-----------candidate: $scandidate');
+              LogUtil.d('addCandidate-----------candidate: $scandidate');
               await pc?.addCandidate(candidate);
             } else {
-              LogUtil.v('addCandidate-----------add tmp: $scandidate');
+              LogUtil.d('addCandidate-----------add tmp: $scandidate');
               remoteCandidates.add(candidate);
             }
           }
@@ -506,7 +516,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         {
           var sessionId = data['sessionId'];
           if (compare(sessionId, _sessionId) == 0) {
-            LogUtil.v('_disconnected: $sessionId');
+            LogUtil.d('_disconnected: $sessionId');
             _stopRecord();
             _closeSession();
           }
@@ -516,7 +526,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         {
           var sessionId = data['sessionId'];
           if (compare(sessionId, _sessionId) == 0) {
-            LogUtil.v('_session_failed: $sessionId');
+            LogUtil.d('_session_failed: $sessionId');
             _stopRecord();
             _closeSession();
           }
@@ -529,11 +539,11 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         }
         break;
       case '_connectinfo':
-        LogUtil.v('onMessage recv $message');
+        LogUtil.d('onMessage recv $message');
         break;
       case '_ping':
         {
-          LogUtil.v('keepalive response!');
+          LogUtil.d('keepalive response!');
         }
         break;
       default:
@@ -543,7 +553,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
 
   void startcall() {
     var delay = currentTimeMillis() - _startTime;
-    LogUtil.v('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  send call use time  :$delay');
+    LogUtil.d('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  send call use time  :$delay');
 
     var datachanneldir = 'true';
     var audiodir = 'sendrecv';
@@ -661,14 +671,14 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         _mic_mute = micmute;
         _speek_mute = speekmute;
       });
-      LogUtil.v('------------ _mute = $_mic_mute');
+      LogUtil.d('------------ _mute = $_mic_mute');
     }
 
     pc?.onIceCandidate = (candidate) async {
       var szcandidate = candidate.candidate;
       var sdpMLineIndex = candidate.sdpMLineIndex;
       var sdpMid = candidate.sdpMid;
-      LogUtil.v('send candidate -------------->> sdpMLineIndex: $sdpMLineIndex sdpMid: $sdpMid candidate: $szcandidate');
+      LogUtil.d('send candidate -------------->> sdpMLineIndex: $sdpMLineIndex sdpMid: $sdpMid candidate: $szcandidate');
 
       // This delay is needed to allow enough time to try an ICE candidate
       // before skipping to the next one. 1 second is just an heuristic value
@@ -691,11 +701,11 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     };
 
     pc?.onSignalingState = (state) {
-      LogUtil.v('onSignalingState: $state');
+      LogUtil.d('onSignalingState: $state');
     };
 
     pc?.onConnectionState = (state) {
-      LogUtil.v('onConnectionState: $state');
+      LogUtil.d('onConnectionState: $state');
       if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
       } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
         _stopRecord();
@@ -704,11 +714,11 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     };
 
     pc?.onIceGatheringState = (state) {
-      LogUtil.v('onIceGatheringState: $state');
+      LogUtil.d('onIceGatheringState: $state');
     };
 
     pc?.onIceConnectionState = (state) {
-      LogUtil.v('onIceConnectionState: $state');
+      LogUtil.d('onIceConnectionState: $state');
     };
 
     pc?.onAddStream = (stream) {
@@ -771,13 +781,13 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     };
 
     pc?.onDataChannel = (channel) {
-      LogUtil.v('onDataChannel: $channel');
+      LogUtil.d('onDataChannel: $channel');
       _addDataChannel(channel);
     };
   }
 
   Future<MediaStream> createLocalStream(bool audio, bool video, bool datachennel) async {
-    LogUtil.v('createLocalStream: audio = $audio  video= $video datachennel = $datachennel');
+    LogUtil.d('createLocalStream: audio = $audio  video= $video datachennel = $datachennel');
 
     Map<String, dynamic> mediaConstraints = {};
     if (audio == false && video == false && datachennel == true) {
@@ -831,8 +841,8 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
       _can_add_candidate = true;
 
       var delay = currentTimeMillis() - _startTime;
-      LogUtil.v('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> send answer  use time  :$delay');
-      LogUtil.v("_createAnswer ${s.sdp}");
+      LogUtil.d('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> send answer  use time  :$delay');
+      LogUtil.d("_createAnswer ${s.sdp}");
       _webSocketSend('__answer', {
         "type": s.type,
         "sdp": s.sdp,
@@ -843,16 +853,16 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         'to': _peerId,
       });
     } catch (e) {
-      LogUtil.v(e.toString());
+      LogUtil.d(e.toString());
     }
   }
 
   void _addDataChannel(RTCDataChannel channel) {
     channel.onDataChannelState = (e) {
       if (e == RTCDataChannelState.RTCDataChannelOpen) {
-        LogUtil.v("datachennel :open");
-        LogUtil.v(channel.label);
-        LogUtil.v(channel.id);
+        LogUtil.d("datachennel :open");
+        LogUtil.d(channel.label);
+        LogUtil.d(channel.id);
         _dataChannelOpened = true;
         dc = channel;
         // _send_datachennel_msg_ex();
@@ -862,9 +872,9 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     };
 
     channel.onMessage = (RTCDataChannelMessage data) {
-      LogUtil.v("datachennel :onMessage");
-      LogUtil.v(channel.label);
-      LogUtil.v(channel.id);
+      LogUtil.d("datachennel :onMessage");
+      LogUtil.d(channel.label);
+      LogUtil.d(channel.id);
       onDataChannelMessage(data);
     };
   }
@@ -873,7 +883,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     RTCDataChannelInit dataChannelDict = RTCDataChannelInit()..maxRetransmits = 30;
     RTCDataChannel channel = await pc!.createDataChannel("datachannel", dataChannelDict);
 
-    LogUtil.v('_createDataChannel: ');
+    LogUtil.d('_createDataChannel: ');
     _addDataChannel(channel);
   }
 
@@ -887,7 +897,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   onDataChannelTxtMessage(message) async {
     DateTime now = DateTime.now();
     var dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
-    LogUtil.v('${dateFormat.format(now)} ondatachennel Message recv len =${message.length}');
+    LogUtil.d('${dateFormat.format(now)} ondatachennel Message recv len =${message.length}');
   }
 
   /// WebRTC Message Handler End
@@ -927,20 +937,23 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   }
 
   Future<void> _initEventBus() async {
+    LogUtil.d("initEventBus");
+    LogUtil.d("******************************************************");
+
     _recvMsgEvent = eventBus.on<ReciveMsgEvent>((event) {
-      LogUtil.v('_recvMsgEvent: ${event.msg}');
+      LogUtil.d('_recvMsgEvent: ${event.msg}');
       onMessage(event.msg);
     });
 
     _sendMsgEvent = eventBus.on<SendMsgEvent>((event) {
-      LogUtil.v('_sendMsgEvent: ${event.event} - ${event.data}');
+      LogUtil.d('_sendMsgEvent: ${event.event} - ${event.data}');
       _send(event.event, event.data);
     });
 
     _delSessionMsgEvent = eventBus.on<DeleteSessionMsgEvent>((event) {
       var session = _sessions.remove(event.msg);
       if (session != null) {
-        LogUtil.v('remove session $session');
+        LogUtil.d('remove session $session');
       }
     });
 
@@ -955,10 +968,10 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   }
 
   Future<void> _startRecord() async {
-    LogUtil.v('_startRecord ------------------------');
+    LogUtil.d('_startRecord ------------------------');
     if (redordstate == RecordState.RecordClosed) {
       try {
-        LogUtil.v('startRecord appDocPath : $_appPath');
+        LogUtil.d('startRecord appDocPath : $_appPath');
         var peerconnectid = pc!.getPeerConnectionId();
 
         DateTime now = DateTime.now();
@@ -968,7 +981,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         List<RTCRtpReceiver> receivers = await pc!.getReceivers();
         bool startrecorded = false;
         receivers.forEach((receive) {
-          LogUtil.v('startRecord track ------------------------: ${receive.track}');
+          LogUtil.d('startRecord track ------------------------: ${receive.track}');
           if (receive.track!.kind == "video") {
             if (_remotevideotrack != null) {
               if (_remotevideotrack!.id == receive.track!.id) {
@@ -995,24 +1008,24 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
           }
         });
       } catch (err) {
-        LogUtil.v(err);
+        LogUtil.d(err);
       }
     } else {
-      LogUtil.v('startRecord  is recording');
+      LogUtil.d('startRecord  is recording');
     }
   }
 
   Future<void> _stopRecord() async {
-    LogUtil.v('stopRecord  -------------------------------------------');
+    LogUtil.d('stopRecord  -------------------------------------------');
 
     if (redordstate == RecordState.Redording) {
-      LogUtil.v('stopRecord...');
+      LogUtil.d('stopRecord...');
       await _mediarecoder.stop();
       redordstate = RecordState.RecordClosed;
       setState(() {
         _recording = false;
       });
-      LogUtil.v('stopRecord  end');
+      LogUtil.d('stopRecord  end');
     }
   }
 
@@ -1022,7 +1035,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
       setState(() {
         _speek_mute = !enable;
       });
-      LogUtil.v('muteSpeekSession  ----------: $_speek_mute');
+      LogUtil.d('muteSpeekSession  ----------: $_speek_mute');
 
       if (_speek_mute) {
         pc?.StopSpeek();
@@ -1058,7 +1071,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
           if (receive.track!.kind!.compareTo("video") == 0) {
             if (_remotevideotrack != null) {
               if (_remotevideotrack!.id == receive.track!.id) {
-                LogUtil.v('captureFrame track : ${receive.track!.kind}');
+                LogUtil.d('captureFrame track : ${receive.track!.kind}');
                 await receive.track!.captureFrame(captureFilepath);
               }
             }
@@ -1066,7 +1079,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         }
       }
     } catch (err) {
-      LogUtil.v(err);
+      LogUtil.d(err);
     }
   }
 
@@ -1217,17 +1230,17 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
-      LogUtil.v('App is in background');
+      LogUtil.d('App is in background');
       if (!_speek_mute) {
         pc?.StopSpeek();
       }
       pc?.StopAudioMode();
-      LogUtil.v('App is in background end');
+      LogUtil.d('App is in background end');
       // pc?.setSpeakerMute(true);
     } else if (state == AppLifecycleState.resumed) {
       // 应用从后台返回前台
       // pc?.setSpeakerMute(!_speek);
-      LogUtil.v('App is in foreground');
+      LogUtil.d('App is in foreground');
       if (_run_first) {
         _run_first = false;
       } else {
@@ -1238,7 +1251,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
         getAudioButtonState();
       }
 
-      LogUtil.v('App is in foreground end');
+      LogUtil.d('App is in foreground end');
     }
   }
 

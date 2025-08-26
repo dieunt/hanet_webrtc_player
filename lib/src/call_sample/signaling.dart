@@ -80,18 +80,15 @@ class Signaling {
   Function(Session session, MediaStream stream)? onAddRemoteStream;
   Function(Session session, MediaStream stream)? onRemoveRemoteStream;
   Function(Session session, String message)? onRecvSignalingMessage;
-  Function(Session session, RTCDataChannel dc, RTCDataChannelMessage data)?
-  onDataChannelMessage;
+  Function(Session session, RTCDataChannel dc, RTCDataChannelMessage data)? onDataChannelMessage;
   Function(Session session, RTCDataChannel dc)? onDataChannel;
   Function(Session session, RTCDataChannelState state)? onDataChannelState;
   Function(Session session, RecordState state)? onRedordState;
   Function(String eventName, dynamic data)? onSendSignalMessge;
   Function(String sessionId, String peerId, OnlineState state)? onSessionCreate;
-  Function(Session session, RTCPeerConnectionState state)?
-  onSessionRTCConnectState;
+  Function(Session session, RTCPeerConnectionState state)? onSessionRTCConnectState;
 
-  String get sdpSemantics =>
-      WebRTC.platformIsWindows ? 'plan-b' : 'unified-plan';
+  String get sdpSemantics => WebRTC.platformIsWindows ? 'plan-b' : 'unified-plan';
 
   Map<String, dynamic> _iceServers = {
     'iceServers': [
@@ -482,7 +479,7 @@ class Signaling {
           }
           var peerId = data['from'];
           var sdp = data['sdp'];
-          LogUtil.v("_offer $sdp");
+          LogUtil.d("_offer $sdp");
           var datachannel = data['datachannel'];
           var audiodir = data['audio'];
           var videodir = data['video'];
@@ -572,7 +569,7 @@ class Signaling {
         {
           var type = data['type'];
           var sdp = data['sdp'];
-          LogUtil.v("_answer $sdp");
+          LogUtil.d("_answer $sdp");
           var sessionId = data['sessionId'];
           if (compare(sessionId, _SessionId) == 0) {
             var session = _sessions[sessionId];
@@ -691,17 +688,13 @@ class Signaling {
     Map<String, dynamic> mediaConstraints = {};
     if (audio == false && video == false && datachennel == true) {
       mediaConstraints = {'audio': false, 'video': false};
-    } else if (audio == true &&
-        video == true &&
-        (_localaudio == true || _localvideo == true) &&
-        datachennel == true) {
+    } else if (audio == true && video == true && (_localaudio == true || _localvideo == true) && datachennel == true) {
       mediaConstraints = {
         'audio': _localaudio,
         'video': _localvideo
             ? {
                 'mandatory': {
-                  'minWidth':
-                      '1280', // Provide your own width, height and frame rate here
+                  'minWidth': '1280', // Provide your own width, height and frame rate here
                   'minHeight': '720',
                   'minFrameRate': '30',
                 },
@@ -710,22 +703,15 @@ class Signaling {
               }
             : false,
       };
-    } else if (audio == true &&
-        video == true &&
-        (_localaudio == true || _localvideo == true) &&
-        datachennel == false) {
+    } else if (audio == true && video == true && (_localaudio == true || _localvideo == true) && datachennel == false) {
       mediaConstraints = {'audio': _localaudio, 'video': _localvideo};
-    } else if (audio == true &&
-        video == false &&
-        (_localaudio == true || _localvideo == true) &&
-        datachennel == true) {
+    } else if (audio == true && video == false && (_localaudio == true || _localvideo == true) && datachennel == true) {
       mediaConstraints = {
         'audio': _localaudio,
         'video': _localvideo
             ? {
                 'mandatory': {
-                  'minWidth':
-                      '1280', // Provide your own width, height and frame rate here
+                  'minWidth': '1280', // Provide your own width, height and frame rate here
                   'minHeight': '720',
                   'minFrameRate': '30',
                 },
@@ -761,8 +747,7 @@ class Signaling {
     newSession.video = video;
     newSession.datachannel = dataChannel;
     newSession.redordstate = RecordState.RecordClosed;
-    if (_onlydatachnannel == false &&
-        (_localaudio == true || _localvideo == true)) {
+    if (_onlydatachnannel == false && (_localaudio == true || _localvideo == true)) {
       _localStream = await createLocalStream(audio, video, dataChannel);
     }
     //print(_iceServers);
@@ -953,8 +938,7 @@ class Signaling {
     Session session, {
     label = 'fileTransfer',
   }) async {
-    RTCDataChannelInit dataChannelDict = RTCDataChannelInit()
-      ..maxRetransmits = 30;
+    RTCDataChannelInit dataChannelDict = RTCDataChannelInit()..maxRetransmits = 30;
     RTCDataChannel channel = await session.pc!.createDataChannel(
       label,
       dataChannelDict,
@@ -977,7 +961,7 @@ class Signaling {
         _onlydatachnannel ? {} : dcConstraints,
       );
       await session.pc!.setLocalDescription(s);
-      LogUtil.v("_createOffer ${s.sdp}");
+      LogUtil.d("_createOffer ${s.sdp}");
 
       var datachanneldir = 'true';
       var audiodir = 'sendrecv';
@@ -1035,7 +1019,7 @@ class Signaling {
       print(
         '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> send answer  use time  :$delay',
       );
-      LogUtil.v("_createAnswer ${s.sdp}");
+      LogUtil.d("_createAnswer ${s.sdp}");
       _send('__answer', {
         "type": s.type,
         "sdp": s.sdp,
@@ -1137,8 +1121,7 @@ class Signaling {
                     startrecorded = true;
                     if (_isWeb()) {
                     } else {
-                      RecorderAudioChannel audiochannel =
-                          RecorderAudioChannel.OUTPUT;
+                      RecorderAudioChannel audiochannel = RecorderAudioChannel.OUTPUT;
                       _mediarecoder.start(
                         2,
                         '$appDocPath/test.mp4',
@@ -1199,8 +1182,7 @@ class Signaling {
         }
         String appDocPath = appDocDir!.path;
         print('captureFrame appPath: ' + appDocPath);
-        String captureFilepath =
-            "$appDocPath" + "/" + sess.sid + randomNumeric(32) + ".jpg";
+        String captureFilepath = "$appDocPath" + "/" + sess.sid + randomNumeric(32) + ".jpg";
 
         List<RTCRtpReceiver> receivers = await sess.pc!.getReceivers();
 

@@ -455,7 +455,7 @@ class _CouldPlayerState extends State<CouldPlayer> {
 
       await peerConnection.setLocalDescription(s);
 
-      LogUtil.v("_createAnswer ${s.sdp}");
+      LogUtil.d("_createAnswer ${s.sdp}");
       _websocket_send('__could_play_answer', {
         "type": s.type,
         "sdp": s.sdp,
