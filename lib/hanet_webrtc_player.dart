@@ -607,6 +607,9 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
     await dc?.close();
     await pc?.close();
     await pc?.dispose();
+    if (widget.onOffline != null) {
+      widget.onOffline!();
+    }
   }
 
   Future<void> _createSession() async {

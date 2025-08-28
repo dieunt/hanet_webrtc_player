@@ -72,13 +72,15 @@ class PartRefreshWidgetState extends State<PartRefreshWidget> {
 }
 
 class HanetWebRTCMultiple extends StatefulWidget {
+  final List<String> sessionIds;
   final List<String> peerIds;
-  final VoidCallback? onOffline;
+  final Function(String)? onOffline;
   final int showVideoWindow;
   final int showRowVideoWindow;
 
   const HanetWebRTCMultiple({
     Key? key,
+    required this.sessionIds,
     required this.peerIds,
     this.onOffline,
     this.showVideoWindow = 8,
@@ -191,13 +193,11 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
     _sessions.clear();
 
     // Create sessions for all peerIds
-    for (String peerId in widget.peerIds) {
+    for (int i = 0; i < widget.peerIds.length; i++) {
+      String peerId = widget.peerIds[i];
+      String sessionId = widget.sessionIds.length > i ? widget.sessionIds[i] : randomNumeric(32);
       _createSession(
-          sessionId: randomNumeric(32),
-          peerId: peerId,
-          remoteRenderer: RTCVideoRenderer(),
-          mediarecoder: MediaRecorder(),
-          focus: true);
+          sessionId: sessionId, peerId: peerId, remoteRenderer: RTCVideoRenderer(), mediarecoder: MediaRecorder(), focus: true);
     }
 
     for (var i = 0; i < _sessions.length; i++) {
@@ -736,6 +736,10 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
   void closeSession(HanetWebRTCMultipleSession session) async {
     sendDisconnected(session);
     await _closePeerConnection(session);
+    // call onOffline if not null
+    if (widget.onOffline != null) {
+      widget.onOffline!(session.sid);
+    }
   }
 
   void sendDisconnected(HanetWebRTCMultipleSession session) {
@@ -787,11 +791,21 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
       );
 
   Widget _buildVideoView() {
+    // Calculate the number of rows needed
+    int numberOfRows = (_showsessions.length / widget.showRowVideoWindow).ceil();
+
+    // Calculate item height based on 16:9 aspect ratio
+    double itemWidth = MediaQuery.of(context).size.width / widget.showRowVideoWindow;
+    double itemHeight = itemWidth * 9 / 16;
+
+    // Calculate total height needed
+    double totalHeight = numberOfRows * itemHeight;
+
     return Container(
         color: Colors.black, // Always black background
         margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
         width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
+        height: totalHeight,
         child: GridView.count(
             crossAxisCount: widget.showRowVideoWindow,
             mainAxisSpacing: 0,
@@ -804,9 +818,7 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.black, // Always black background
-      child: Stack(
-        children: [Positioned.fill(child: _buildVideoView())],
-      ),
+      child: _buildVideoView(),
     );
   }
 }
