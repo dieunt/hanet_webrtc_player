@@ -19,7 +19,7 @@ enum RecordState { Redording, RecordClosed }
 
 final String WSS_SERVER_URL = "https://webrtc-stream.hanet.ai/wswebclient/";
 
-class HanetWebRTSingle extends StatefulWidget {
+class HanetWebRTCSingle extends StatefulWidget {
   final String peerId;
   final String source;
   final bool showVolume;
@@ -34,7 +34,7 @@ class HanetWebRTSingle extends StatefulWidget {
   final Function(bool)? onFullscreen;
   final bool usedatachannel;
 
-  const HanetWebRTSingle({
+  const HanetWebRTCSingle({
     Key? key,
     required this.peerId,
     this.source = "SubStream",
@@ -52,10 +52,10 @@ class HanetWebRTSingle extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<HanetWebRTSingle> createState() => _HanetWebRTSingleState();
+  State<HanetWebRTCSingle> createState() => _HanetWebRTCSingleState();
 }
 
-class _HanetWebRTSingleState extends State<HanetWebRTSingle> with WidgetsBindingObserver {
+class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindingObserver {
   // WebRTC variable
   String? _selfId;
   String? _peerId;
