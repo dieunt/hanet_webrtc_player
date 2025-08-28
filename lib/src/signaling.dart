@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'utils2/utils.dart';
 import 'package:flutter_image_gallery_saver/flutter_image_gallery_saver.dart';
 
-import 'utils2/web_utils.dart' if (dart.library.io) 'utils/web_utils_stub.dart' as web_utils;
+import 'utils2/web_utils.dart' if (dart.library.io) 'utils2/web_utils_stub.dart' as web_utils;
 
 /// Signaling connection state
 enum SignalingState {
