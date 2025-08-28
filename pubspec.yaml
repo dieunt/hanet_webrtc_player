@@ -15,7 +15,7 @@ dependencies:
   flutter_webrtc:
     git:
       url: https://github.com/dieunt/flutter_webrtc.git
-      ref: 0.0.6
+      ref: 0.0.7
   # flutter_blue: ^0.8.0
   flutter_mdns_plugin: ^0.0.3
   shared_preferences: ^2.0.9
