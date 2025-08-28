@@ -796,7 +796,7 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
             crossAxisCount: widget.showRowVideoWindow,
             mainAxisSpacing: 0,
             crossAxisSpacing: 0,
-            childAspectRatio: 1 / 0.75,
+            childAspectRatio: 16 / 9,
             children: _showsessions.map((session) => _buildItem(session)).toList()));
   }
 
