@@ -12,7 +12,6 @@ import 'event_bus_util.dart';
 import 'event_message.dart';
 import 'random_string.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io' show Platform;
 
 class DataChannelDownloacPic extends StatefulWidget {
   static String tag = 'call_sample';
