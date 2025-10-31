@@ -1,4 +1,4 @@
-# Hanet WebRTC Player
+# Flutter Hanet WebRTC Player
 
 A WebRTC video player widget component for Flutter applications with built-in controls for volume, microphone, and fullscreen mode.
 
@@ -77,4 +77,3 @@ Container(
 ## Development
 
 This package is currently in development and will be extended with actual WebRTC video playback functionality in future releases.
-

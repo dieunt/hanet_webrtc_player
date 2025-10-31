@@ -11,6 +11,40 @@ import 'src/utils/ProxyWebsocket.dart';
 
 typedef BuildWidget = Widget Function();
 
+class PeerItem {
+  final String peerId;
+  final String type;
+  final String name;
+  final String imageUrl;
+
+  const PeerItem({
+    required this.peerId,
+    required this.type,
+    required this.name,
+    required this.imageUrl,
+  });
+
+  @override
+  String toString() {
+    return 'PeerItem(peerId: $peerId, type: $type, name: $name, imageUrl: $imageUrl)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is PeerItem &&
+        other.peerId == peerId &&
+        other.type == type &&
+        other.name == name &&
+        other.imageUrl == imageUrl;
+  }
+
+  @override
+  int get hashCode {
+    return peerId.hashCode ^ type.hashCode ^ name.hashCode ^ imageUrl.hashCode;
+  }
+}
+
 final String WSS_SERVER_URL = "https://webrtc-stream.hanet.ai/wswebclient/";
 
 class HanetWebRTCMultipleSession {
@@ -73,7 +107,7 @@ class PartRefreshWidgetState extends State<PartRefreshWidget> {
 
 class HanetWebRTCMultiple extends StatefulWidget {
   final List<String> sessionIds;
-  final List<String> peerIds;
+  final List<PeerItem> peerItems;
   final Function(String)? onOffline;
   final int showVideoWindow;
   final int showRowVideoWindow;
@@ -81,7 +115,7 @@ class HanetWebRTCMultiple extends StatefulWidget {
   const HanetWebRTCMultiple({
     Key? key,
     required this.sessionIds,
-    required this.peerIds,
+    required this.peerItems,
     this.onOffline,
     this.showVideoWindow = 8,
     this.showRowVideoWindow = 2,
@@ -192,12 +226,16 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
   void _initWebrtc() {
     _sessions.clear();
 
-    // Create sessions for all peerIds
-    for (int i = 0; i < widget.peerIds.length; i++) {
-      String peerId = widget.peerIds[i];
+    // Create sessions for all peerItems
+    for (int i = 0; i < widget.peerItems.length; i++) {
+      PeerItem peerItem = widget.peerItems[i];
       String sessionId = widget.sessionIds.length > i ? widget.sessionIds[i] : randomNumeric(32);
       _createSession(
-          sessionId: sessionId, peerId: peerId, remoteRenderer: RTCVideoRenderer(), mediarecoder: MediaRecorder(), focus: true);
+          sessionId: sessionId,
+          peerId: peerItem.peerId,
+          remoteRenderer: RTCVideoRenderer(),
+          mediarecoder: MediaRecorder(),
+          focus: true);
     }
 
     for (var i = 0; i < _sessions.length; i++) {
@@ -675,6 +713,7 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
 
   @override
   void dispose() {
+    print('HanetWebRTCMultiple dispose');
     _socket?.close();
     eventBus.off(_sendMsgEvent);
     eventBus.off(_delSessionMsgEvent);
@@ -773,22 +812,102 @@ class _HanetWebRTCMultipleState extends State<HanetWebRTCMultiple> {
     });
   }
 
-  Container _buildItem(HanetWebRTCMultipleSession session) => Container(
-        child: GestureDetector(
-          child: Container(
-            height: 120,
-            margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
-            child: RTCVideoView(session.remoteRenderer),
-            decoration: BoxDecoration(
-              color: Colors.black,
-              border: Border.fromBorderSide(BorderSide(width: 1, color: Colors.grey, style: BorderStyle.solid)),
+  Container _buildItem(HanetWebRTCMultipleSession session) {
+    // Find the corresponding PeerItem for this session
+    PeerItem? peerItem;
+    for (var item in widget.peerItems) {
+      if (item.peerId == session.pid) {
+        peerItem = item;
+        break;
+      }
+    }
+
+    return Container(
+      child: GestureDetector(
+        child: Stack(
+          children: [
+            Container(
+              height: 120,
+              margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+              child: RTCVideoView(session.remoteRenderer),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                border: Border.fromBorderSide(BorderSide(width: 1, color: Colors.grey, style: BorderStyle.solid)),
+              ),
             ),
-          ),
-          onTap: () {
-            _onVideoChick(session);
-          },
+            // Overlay with peer information
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.all(4.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Peer icon
+                    if (peerItem != null)
+                      Container(
+                        width: 20,
+                        height: 20,
+                        margin: EdgeInsets.only(right: 4.0),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.blue,
+                        ),
+                        child: peerItem.imageUrl.isNotEmpty
+                            ? ClipOval(
+                                child: Image.asset(
+                                  peerItem.imageUrl,
+                                  width: 20,
+                                  height: 20,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.person,
+                                      size: 12,
+                                      color: Colors.white,
+                                    );
+                                  },
+                                ),
+                              )
+                            : Icon(
+                                Icons.person,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                      ),
+                    // Peer name
+                    if (peerItem != null)
+                      Expanded(
+                        child: Text(
+                          peerItem.name,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      );
+        onTap: () {
+          _onVideoChick(session);
+        },
+      ),
+    );
+  }
 
   Widget _buildVideoView() {
     // Calculate the number of rows needed

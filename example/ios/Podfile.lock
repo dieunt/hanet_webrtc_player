@@ -1,14 +1,10 @@
 PODS:
   - Flutter (1.0.0)
-  - flutter_image_gallery_saver (0.0.1):
-    - Flutter
   - flutter_mdns_plugin (0.0.1):
     - Flutter
   - flutter_webrtc (0.0.1):
     - Flutter
     - Libyuv (= 1703)
-  - image_gallery_saver (1.5.0):
-    - Flutter
   - Libyuv (1703)
   - path_provider_foundation (0.0.1):
     - Flutter
@@ -22,10 +18,8 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - flutter_image_gallery_saver (from `.symlinks/plugins/flutter_image_gallery_saver/ios`)
   - flutter_mdns_plugin (from `.symlinks/plugins/flutter_mdns_plugin/ios`)
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
-  - image_gallery_saver (from `.symlinks/plugins/image_gallery_saver/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
@@ -37,14 +31,10 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  flutter_image_gallery_saver:
-    :path: ".symlinks/plugins/flutter_image_gallery_saver/ios"
   flutter_mdns_plugin:
     :path: ".symlinks/plugins/flutter_mdns_plugin/ios"
   flutter_webrtc:
     :path: ".symlinks/plugins/flutter_webrtc/ios"
-  image_gallery_saver:
-    :path: ".symlinks/plugins/image_gallery_saver/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   shared_preferences_foundation:
@@ -54,15 +44,13 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_image_gallery_saver: 0453c83412e9691abef94c04c8d180724f5083a8
   flutter_mdns_plugin: 2c0b5650c437d2602487f1ac274eed5dfa4542ff
-  flutter_webrtc: ccd1f1980d1faec08b9355c3522190f0c70e8940
-  image_gallery_saver: 50ed0238a5f3747c340f4357c21e8c54b7ead376
+  flutter_webrtc: fb3877cf7a8d43aa8d0ef43522759af9dea45418
   Libyuv: 5f79ced0ee66e60a612ca97de1e6ccacd187a437
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
 
-PODFILE CHECKSUM: 251cb053df7158f337c0712f2ab29f4e0fa474ce
+PODFILE CHECKSUM: 0210a8b7743178e85f5b852d1744d45c733604e4
 
 COCOAPODS: 1.16.2

@@ -17,6 +17,7 @@ class HanetWebRTCPlayer extends StatefulWidget {
   final bool isVertical;
   final VoidCallback? onOffline;
   final Function(bool)? onFullscreen;
+  final HanetWebRTCPlayerController? controller;
 
   const HanetWebRTCPlayer({
     Key? key,
@@ -32,10 +33,37 @@ class HanetWebRTCPlayer extends StatefulWidget {
     this.isVertical = false,
     this.onOffline,
     this.onFullscreen,
+    this.controller,
   }) : super(key: key);
 
   @override
   State<HanetWebRTCPlayer> createState() => _HanetWebRTCPlayerState();
+}
+
+// Simple controller for basic widget management
+class HanetWebRTCPlayerController {
+  final GlobalKey<_HanetWebRTCPlayerState> _key;
+
+  HanetWebRTCPlayerController() : _key = GlobalKey<_HanetWebRTCPlayerState>();
+
+  GlobalKey<_HanetWebRTCPlayerState> get key => _key;
+
+  // Exposed controls
+  void changeSource(String source) => _key.currentState?.changeSource(source);
+  void toggleVolume() => _key.currentState?._toggleVolume();
+  void setVolume(bool isOn) => _key.currentState?._setVolume(isOn);
+  void toggleMic() => _key.currentState?._toggleMic();
+  void setMic(bool isOn) => _key.currentState?._setMic(isOn);
+  void toggleFullscreen() => _key.currentState?._toggleFullscreen();
+  void startRecording() => _key.currentState?._startRecording();
+  void stopRecording() => _key.currentState?._stopRecording();
+  void captureFrame() => _key.currentState?._captureFrame();
+
+  // State getters
+  bool get isVolumeOn => _key.currentState?._isVolumeOn ?? false;
+  bool get isMicOn => _key.currentState?._isMicOn ?? false;
+  bool get isFullscreen => _key.currentState?._isFullscreen ?? false;
+  bool get isRecording => _key.currentState?._isRecording ?? false;
 }
 
 class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindingObserver {
@@ -43,7 +71,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   bool _isMicOn = false;
   bool _isFullscreen = false;
   bool _isRecording = false;
-  bool _isDebug = false;
+  String _currentSource = "SubStream";
 
   WebRTCManager? _webrtcManager;
 
@@ -51,6 +79,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _currentSource = widget.source;
     _initializeWebRTC();
     if (!kIsWeb) _resetOrientation();
   }
@@ -80,7 +109,7 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
   void _initializeWebRTC() {
     _webrtcManager = WebRTCManager(
       peerId: widget.peerId,
-      source: widget.source,
+      source: _currentSource,
       isDebug: widget.isDebug,
     );
 
@@ -134,6 +163,38 @@ class _HanetWebRTCPlayerState extends State<HanetWebRTCPlayer> with WidgetsBindi
       _isMicOn = !_isMicOn;
       _webrtcManager?.toggleMic(_isMicOn);
     });
+  }
+
+  // Setters used by controller
+  void _setVolume(bool isOn) {
+    if (!widget.showVolume) return;
+    setState(() {
+      _isVolumeOn = isOn;
+      _webrtcManager?.toggleVolume(_isVolumeOn);
+    });
+  }
+
+  void _setMic(bool isOn) {
+    if (!widget.showMic) return;
+    setState(() {
+      _isMicOn = isOn;
+      _webrtcManager?.toggleMic(_isMicOn);
+    });
+  }
+
+  // Change source: re-create WebRTC manager with new source
+  Future<void> changeSource(String source) async {
+    if (_currentSource == source) return;
+    setState(() {
+      _currentSource = source;
+    });
+    final old = _webrtcManager;
+    _webrtcManager = null;
+    await old?.dispose();
+    if (mounted) {
+      _initializeWebRTC();
+      setState(() {});
+    }
   }
 
   void _resetOrientation() {

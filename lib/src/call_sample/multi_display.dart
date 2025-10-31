@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+// import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:core';
@@ -21,11 +21,7 @@ import '../utils/LogUtil.dart';
 typedef BuildWidget = Widget Function();
 
 class MultiDisplaySession {
-  MultiDisplaySession(
-      {required this.sid,
-      required this.pid,
-      required this.remoteRenderer,
-      required this.mediarecoder});
+  MultiDisplaySession({required this.sid, required this.pid, required this.remoteRenderer, required this.mediarecoder});
   String pid;
   String sid;
   String videofilepath = "";
@@ -94,10 +90,7 @@ class MultiDisplay extends StatefulWidget {
   final String selfId;
   final bool usedatachannel;
 
-  MultiDisplay(
-      {required this.selfId,
-      required this.peerId,
-      required this.usedatachannel});
+  MultiDisplay({required this.selfId, required this.peerId, required this.usedatachannel});
 
   @override
   _MultiDisplayState createState() => _MultiDisplayState();
@@ -141,8 +134,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
     ]
   };
 
-  String get sdpSemantics =>
-      WebRTC.platformIsWindows ? 'plan-b' : 'unified-plan';
+  String get sdpSemantics => WebRTC.platformIsWindows ? 'plan-b' : 'unified-plan';
 
   var _recvMsgEvent;
 
@@ -286,7 +278,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
         video: true,
         dataChannel: true,
         focus: false);
-   
+
     _createSession(
         sessionId: randomNumeric(32),
         peerId: "RHZL-00-WTSN-9S3D-00000727",
@@ -306,7 +298,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
         video: true,
         dataChannel: true,
         focus: false);
-     /*
+    /*
     _createSession(
         sessionId: randomNumeric(32),
         peerId: "RHZL-00-LR8I-DX8T-00000988",
@@ -475,8 +467,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
               }
               var domainnameiceServers = data['domainnameiceServers'];
               if (domainnameiceServers != null) {
-                sess._domainnameiceServers =
-                    _decoder.convert(domainnameiceServers);
+                sess._domainnameiceServers = _decoder.convert(domainnameiceServers);
                 sess._domainname = true;
               }
               var state = data['state'];
@@ -521,8 +512,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
               var scandidate = candidateobject['candidate'];
               var nsdpMLineIndex = candidateobject['sdpMLineIndex'];
               var ssdpMid = candidateobject['sdpMid'];
-              RTCIceCandidate candidate =
-                  RTCIceCandidate(scandidate, ssdpMid, nsdpMLineIndex);
+              RTCIceCandidate candidate = RTCIceCandidate(scandidate, ssdpMid, nsdpMLineIndex);
               if (sess.pc != null) {
                 print('addCandidate------------------- :$scandidate');
                 await sess.pc?.addCandidate(candidate);
@@ -613,22 +603,18 @@ class _MultiDisplayState extends State<MultiDisplay> {
     });
   }
 
-  Future<void> _createDataChannel(MultiDisplaySession session,
-      {label = 'fileTransfer'}) async {
-    RTCDataChannelInit dataChannelDict = RTCDataChannelInit()
-      ..maxRetransmits = 30;
-    RTCDataChannel channel =
-        await session.pc!.createDataChannel(label, dataChannelDict);
+  Future<void> _createDataChannel(MultiDisplaySession session, {label = 'fileTransfer'}) async {
+    RTCDataChannelInit dataChannelDict = RTCDataChannelInit()..maxRetransmits = 30;
+    RTCDataChannel channel = await session.pc!.createDataChannel(label, dataChannelDict);
     channel.onDataChannelState = (state) {
       var lable1 = channel.label;
       if (state == RTCDataChannelState.RTCDataChannelOpen) {
         session._dataChannelOpened = true;
         session.dc = channel;
-      var request = {"title":"config_get"};
-      var message = _encoder.convert(request);
-      print('_send_datachennel_msg: $message');
-      session!.dc?.send(RTCDataChannelMessage(message));
-
+        var request = {"title": "config_get"};
+        var message = _encoder.convert(request);
+        print('_send_datachennel_msg: $message');
+        session!.dc?.send(RTCDataChannelMessage(message));
       } else if (state == RTCDataChannelState.RTCDataChannelClosed) {
         session._dataChannelOpened = false;
       }
@@ -668,11 +654,8 @@ class _MultiDisplayState extends State<MultiDisplay> {
       required bool video,
       required bool dataChannel,
       required bool focus}) async {
-    var newSession = MultiDisplaySession(
-        sid: sessionId,
-        pid: peerId,
-        remoteRenderer: remoteRenderer,
-        mediarecoder: mediarecoder);
+    var newSession =
+        MultiDisplaySession(sid: sessionId, pid: peerId, remoteRenderer: remoteRenderer, mediarecoder: mediarecoder);
 
     newSession.audio = audio;
     newSession.video = false;
@@ -695,8 +678,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
     return newSession;
   }
 
-  Future<void> _createAnswer(
-      MultiDisplaySession? se, RTCPeerConnection pc) async {
+  Future<void> _createAnswer(MultiDisplaySession? se, RTCPeerConnection pc) async {
     try {
       Map<String, dynamic> dcConstraints = {};
 
@@ -719,24 +701,18 @@ class _MultiDisplayState extends State<MultiDisplay> {
     }
   }
 
-  Future<MediaStream> createLocalStream(
-      bool audio, bool video, bool datachennel) async {
-    print(
-        'createLocalStream: audio = $audio  video= $video datachennel = $datachennel');
+  Future<MediaStream> createLocalStream(bool audio, bool video, bool datachennel) async {
+    print('createLocalStream: audio = $audio  video= $video datachennel = $datachennel');
     Map<String, dynamic> mediaConstraints = {};
     if (audio == false && video == false && datachennel == true) {
       mediaConstraints = {'audio': false, 'video': false};
-    } else if (audio == true &&
-        video == true &&
-        (audio == true || video == true) &&
-        datachennel == true) {
+    } else if (audio == true && video == true && (audio == true || video == true) && datachennel == true) {
       mediaConstraints = {
         'audio': audio,
         'video': video
             ? {
                 'mandatory': {
-                  'minWidth':
-                      '1280', // Provide your own width, height and frame rate here
+                  'minWidth': '1280', // Provide your own width, height and frame rate here
                   'minHeight': '720',
                   'minFrameRate': '30',
                 },
@@ -745,22 +721,15 @@ class _MultiDisplayState extends State<MultiDisplay> {
               }
             : false
       };
-    } else if (audio == true &&
-        video == true &&
-        (audio == true || video == true) &&
-        datachennel == false) {
+    } else if (audio == true && video == true && (audio == true || video == true) && datachennel == false) {
       mediaConstraints = {'audio': audio, 'video': video};
-    } else if (audio == true &&
-        video == false &&
-        (audio == true || video == true) &&
-        datachennel == true) {
+    } else if (audio == true && video == false && (audio == true || video == true) && datachennel == true) {
       mediaConstraints = {
         'audio': audio,
         'video': video
             ? {
                 'mandatory': {
-                  'minWidth':
-                      '1280', // Provide your own width, height and frame rate here
+                  'minWidth': '1280', // Provide your own width, height and frame rate here
                   'minHeight': '720',
                   'minFrameRate': '30',
                 },
@@ -773,23 +742,17 @@ class _MultiDisplayState extends State<MultiDisplay> {
       mediaConstraints = {'audio': audio, 'video': video};
     }
 
-    MediaStream stream =
-        await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    MediaStream stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
 
     return stream;
   }
 
   Future<RTCPeerConnection> _createPeerConnectionByOffer(
-      MultiDisplaySession session,
-      bool audio,
-      bool video,
-      bool dataChannel,
-      String sdp) async {
+      MultiDisplaySession session, bool audio, bool video, bool dataChannel, String sdp) async {
     //print(_iceServers);
     Map<String, dynamic> iceServers;
     if (session._domainname) {
-      iceServers =
-          _decoder.convert(_encoder.convert(session._domainnameiceServers));
+      iceServers = _decoder.convert(_encoder.convert(session._domainnameiceServers));
     } else {
       iceServers = _decoder.convert(_encoder.convert(session._iceServers));
     }
@@ -800,8 +763,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
       ...{'disableIpv6': true},
       ...{'sdpSemantics': sdpSemantics}
     }, _config);
-    print(
-        'peerConnection iceServers------------------------------------------- $iceServers');
+    print('peerConnection iceServers------------------------------------------- $iceServers');
     session.pc = peerConnection;
 
     if (session.audio || session.video) {
@@ -833,8 +795,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
       var szcandidate = candidate.candidate;
       var sdpMLineIndex = candidate.sdpMLineIndex;
       var sdpMid = candidate.sdpMid;
-      print(
-          'send candidate  sdpMLineIndex: $sdpMLineIndex sdpMid: $sdpMid candidate: $szcandidate');
+      print('send candidate  sdpMLineIndex: $sdpMLineIndex sdpMid: $sdpMid candidate: $szcandidate');
 
       // This delay is needed to allow enough time to try an ICE candidate
       // before skipping to the next one. 1 second is just an heuristic value
@@ -847,11 +808,8 @@ class _MultiDisplayState extends State<MultiDisplay> {
                 'messageId': randomNumeric(32),
                 'from': _selfId,
                 'to': session.pid,
-                "candidate": _encoder.convert({
-                  'candidate': candidate.candidate,
-                  'sdpMid': candidate.sdpMid,
-                  'sdpMLineIndex': candidate.sdpMLineIndex
-                })
+                "candidate": _encoder.convert(
+                    {'candidate': candidate.candidate, 'sdpMid': candidate.sdpMid, 'sdpMLineIndex': candidate.sdpMLineIndex})
               }));
     };
 
@@ -866,8 +824,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
             _inCalling = true;
           });
         }
-      } else if (state ==
-          RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
+      } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
         session._inCalling = false;
         if (session.sid == focusSessionId) {
           setState(() {
@@ -904,15 +861,12 @@ class _MultiDisplayState extends State<MultiDisplay> {
       stream.getAudioTracks().forEach((audioTrack) {
         if (session._remoteaudiotrack == audioTrack) {
           session._remoteaudiotrack = null;
-    
         }
       });
     };
     peerConnection.onAddTrack = (stream, track) {
       print('onAddTrack: stream' + stream.toString());
-      print(
-          'onAddTrack track &&&&&&&&&&&&&&&&  ${track}  peerConnection id = ' +
-              peerConnection.getPeerConnectionId());
+      print('onAddTrack track &&&&&&&&&&&&&&&&  ${track}  peerConnection id = ' + peerConnection.getPeerConnectionId());
       if (track.kind == "video") {
         session._remotevideotrack = track;
         session.remoteRenderer.srcObject = stream;
@@ -950,8 +904,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
       };
     };
 
-    await peerConnection
-        .setRemoteDescription(RTCSessionDescription(sdp, "offer"));
+    await peerConnection.setRemoteDescription(RTCSessionDescription(sdp, "offer"));
     await _createAnswer(session, peerConnection);
 
     await _createDataChannel(session);
@@ -981,7 +934,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
     await session.pc?.dispose();
     session.dc = null;
     session.pc = null;
-     print('_closePeerConnection');
+    print('_closePeerConnection');
   }
 
   void closeSession(MultiDisplaySession session) async {
@@ -1021,8 +974,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
             _mute = sess._mute = !sess._mute;
           });
           sender.track!.enabled = sess._mute;
-          print(
-              'muteLocalStreamSession track ${sess.sid} ------------------------: ${sender.track}');
+          print('muteLocalStreamSession track ${sess.sid} ------------------------: ${sender.track}');
         }
       }
     }
@@ -1038,8 +990,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
             _speek = sess._speek = !sess._speek;
           });
           receive.track!.enabled = sess._speek;
-          print(
-              'muteSpeekSession track ${sess.sid} ------------------------: ${receive.track}');
+          print('muteSpeekSession track ${sess.sid} ------------------------: ${receive.track}');
         }
       }
     }
@@ -1056,8 +1007,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
             sess._speek = enable;
             _speek = enable;
           });
-          print(
-              'EnableSpeekSession track ${sess.sid} ------------------------: ${receive.track}');
+          print('EnableSpeekSession track ${sess.sid} ------------------------: ${receive.track}');
         }
       }
     }
@@ -1083,13 +1033,8 @@ class _MultiDisplayState extends State<MultiDisplay> {
         print('startRecord peerconnectid : $peerconnectid');
         print('startRecord appDocPath : $appDocPath');
         DateTime now = DateTime.now();
-        String strtime = now
-            .toString()
-            .replaceAll(" ", "")
-            .replaceAll(".", "")
-            .replaceAll("-", "")
-            .replaceAll(":", "");
-        String recordFilepath = "$appDocPath" + "/" + strtime +".mp4";
+        String strtime = now.toString().replaceAll(" ", "").replaceAll(".", "").replaceAll("-", "").replaceAll(":", "");
+        String recordFilepath = "$appDocPath" + "/" + strtime + ".mp4";
         List<RTCRtpReceiver>? receivers = await sess.pc!.getReceivers();
         print('startRecord track ------------------------: ${recordFilepath}');
         for (int i = 0; i < receivers.length; i++) {
@@ -1098,8 +1043,8 @@ class _MultiDisplayState extends State<MultiDisplay> {
           if (receive.track!.kind == "video") {
             RecorderAudioChannel audiochannel = RecorderAudioChannel.OUTPUT;
             //sess.mediarecoder = new MediaRecorder();
-            sess.mediarecoder.start(3,recordFilepath, peerconnectid,
-                videoTrack: receive.track,audioTrack:sess._remoteaudiotrack, audioChannel: audiochannel);
+            sess.mediarecoder.start(3, recordFilepath, peerconnectid,
+                videoTrack: receive.track, audioTrack: sess._remoteaudiotrack, audioChannel: audiochannel);
             sess.videofilepath = recordFilepath;
             sess._recording = true;
             setState(() {
@@ -1125,12 +1070,12 @@ class _MultiDisplayState extends State<MultiDisplay> {
     if (sess._recording == true) {
       print('stopRecord ');
       await sess.mediarecoder.stop();
-      sess._recording = false;    
+      sess._recording = false;
       if (sess.videofilepath.length > 0) {
-        final result = await ImageGallerySaver.saveFile(sess.videofilepath);
-        if (result['isSuccess'] == true) {
-          await deleteFile(sess.videofilepath);
-        }
+        // final result = await ImageGallerySaver.saveFile(sess.videofilepath);
+        // if (result['isSuccess'] == true) {
+        //   await deleteFile(sess.videofilepath);
+        // }
         sess.videofilepath = "";
       }
 
@@ -1166,15 +1111,9 @@ class _MultiDisplayState extends State<MultiDisplay> {
         String appDocPath = appDocDir!.path;
         print('captureFrame appPath: ' + appDocPath);
         print('captureFrame session id: ' + sess.sid);
-        print('captureFrame peerConnection id: ' +
-            sess.pc!.getPeerConnectionId());
+        print('captureFrame peerConnection id: ' + sess.pc!.getPeerConnectionId());
         DateTime now = DateTime.now();
-        String strtime = now
-            .toString()
-            .replaceAll(" ", "")
-            .replaceAll(".", "")
-            .replaceAll("-", "")
-            .replaceAll(":", "");
+        String strtime = now.toString().replaceAll(" ", "").replaceAll(".", "").replaceAll("-", "").replaceAll(":", "");
         String captureFilepath = "$appDocPath" + "/" + strtime + ".jpg";
         List<RTCRtpReceiver>? receivers = await sess.pc?.getReceivers();
         for (int i = 0; i < receivers!.length; i++) {
@@ -1210,13 +1149,11 @@ class _MultiDisplayState extends State<MultiDisplay> {
           actions: [
             TextButton(
               child: Text("取消"),
-              onPressed: () =>
-                  {deleteFile(filePath), Navigator.of(context).pop()},
+              onPressed: () => {deleteFile(filePath), Navigator.of(context).pop()},
             ),
             TextButton(
               child: Text("确定"),
-              onPressed: () =>
-                  {deleteFile(filePath), Navigator.of(context).pop()},
+              onPressed: () => {deleteFile(filePath), Navigator.of(context).pop()},
             ),
           ],
         );
@@ -1226,8 +1163,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
 
   Future<void> writeToFile(ByteData data, String path) async {
     final buffer = data.buffer;
-    await File(path).writeAsBytes(
-        buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    await File(path).writeAsBytes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
   }
 
   _handlerecord() {
@@ -1338,10 +1274,8 @@ class _MultiDisplayState extends State<MultiDisplay> {
             child: RTCVideoView(session.remoteRenderer),
             decoration: BoxDecoration(
               color: Colors.black,
-              border: Border.fromBorderSide(BorderSide(
-                  width: 1,
-                  color: session._focus ? Colors.red : Colors.grey,
-                  style: BorderStyle.solid)),
+              border: Border.fromBorderSide(
+                  BorderSide(width: 1, color: session._focus ? Colors.red : Colors.grey, style: BorderStyle.solid)),
             ),
           ),
           onTap: () {
@@ -1358,56 +1292,48 @@ class _MultiDisplayState extends State<MultiDisplay> {
     return WillPopScope(
       child: Scaffold(
           appBar: AppBar(
-            title: Text('MultiDisplay' +
-                (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
+            title: Text('MultiDisplay' + (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
           ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           floatingActionButton: SizedBox(
               width: 300.0,
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    FloatingActionButton(
-                      child: const Icon(Icons.video_camera_back),
-                      onPressed: _handlerecord,
-                      heroTag: 'record',
-                      backgroundColor: _inCalling
-                          ? _recording
-                              ? Colors.pink
-                              : Colors.blue
-                          : Colors.grey,
-                    ),
-                    FloatingActionButton(
-                      child: _speek
-                          ? const Icon(Icons.volume_off)
-                          : const Icon(Icons.volume_up),
-                      backgroundColor: _inCalling ? Colors.blue : Colors.grey,
-                      onPressed: _switchVolume,
-                      heroTag: 'switch_volume',
-                    ),
-                    FloatingActionButton(
-                      onPressed: _hangUp,
-                      tooltip: 'Hangup',
-                      heroTag: 'Hangup',
-                      child: const Icon(Icons.call_end),
-                      backgroundColor: Colors.pink,
-                    ),
-                    FloatingActionButton(
-                      child: _mute
-                          ? const Icon(Icons.mic_off)
-                          : const Icon(Icons.mic),
-                      backgroundColor: _inCalling ? Colors.blue : Colors.grey,
-                      onPressed: _muteMic,
-                      heroTag: 'muteMic',
-                    ),
-                    FloatingActionButton(
-                      child: const Icon(Icons.photo_camera),
-                      onPressed: _handlcapture,
-                      heroTag: 'capture',
-                      backgroundColor: _inCalling ? Colors.blue : Colors.grey,
-                    )
-                  ])),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                FloatingActionButton(
+                  child: const Icon(Icons.video_camera_back),
+                  onPressed: _handlerecord,
+                  heroTag: 'record',
+                  backgroundColor: _inCalling
+                      ? _recording
+                          ? Colors.pink
+                          : Colors.blue
+                      : Colors.grey,
+                ),
+                FloatingActionButton(
+                  child: _speek ? const Icon(Icons.volume_off) : const Icon(Icons.volume_up),
+                  backgroundColor: _inCalling ? Colors.blue : Colors.grey,
+                  onPressed: _switchVolume,
+                  heroTag: 'switch_volume',
+                ),
+                FloatingActionButton(
+                  onPressed: _hangUp,
+                  tooltip: 'Hangup',
+                  heroTag: 'Hangup',
+                  child: const Icon(Icons.call_end),
+                  backgroundColor: Colors.pink,
+                ),
+                FloatingActionButton(
+                  child: _mute ? const Icon(Icons.mic_off) : const Icon(Icons.mic),
+                  backgroundColor: _inCalling ? Colors.blue : Colors.grey,
+                  onPressed: _muteMic,
+                  heroTag: 'muteMic',
+                ),
+                FloatingActionButton(
+                  child: const Icon(Icons.photo_camera),
+                  onPressed: _handlcapture,
+                  heroTag: 'capture',
+                  backgroundColor: _inCalling ? Colors.blue : Colors.grey,
+                )
+              ])),
           body: OrientationBuilder(builder: (context, orientation) {
             return Container(
                 child: GridView.count(
@@ -1415,9 +1341,7 @@ class _MultiDisplayState extends State<MultiDisplay> {
                     mainAxisSpacing: 0,
                     crossAxisSpacing: 0,
                     childAspectRatio: 1 / 0.75,
-                    children: _showsessions
-                        .map((session) => _buildItem(session))
-                        .toList()));
+                    children: _showsessions.map((session) => _buildItem(session)).toList()));
           })),
       onWillPop: () {
         //监听到退出按键

@@ -589,14 +589,14 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
   }
 
   Future<void> _closeSession() async {
-    pc?.StopAudioMode();
-    if (!_speek_mute) {
-      pc?.StopSpeek();
-    }
+    // pc?.StopAudioMode();
+    // if (!_speek_mute) {
+    //   pc?.StopSpeek();
+    // }
 
-    if (!_mic_mute) {
-      pc?.StopMicrophone();
-    }
+    // if (!_mic_mute) {
+    //   pc?.StopMicrophone();
+    // }
 
     _localStream?.getTracks().forEach((element) async {
       await element.stop();
@@ -1011,12 +1011,29 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
       setState(() {
         _speek_mute = !enable;
       });
-      LogUtil.d('muteSpeekSession  ----------: $_speek_mute');
-
       if (_speek_mute) {
+        LogUtil.d('[VOLUME] OFF -> StopSpeek');
         pc?.StopSpeek();
       } else {
+        LogUtil.d('[VOLUME] ON  -> StartSpeek');
         pc?.StartSpeek();
+      }
+      // Safeguard: if MIC is currently ON, briefly restart it after switching speaker
+      if (_mic_mute == false) {
+        try {
+          pc?.StopMicrophone();
+          LogUtil.d('[SAFEGUARD] MIC restart: issued StopMicrophone');
+          Future.delayed(const Duration(milliseconds: 500), () {
+            try {
+              pc?.StartMicrophone();
+              LogUtil.d('[SAFEGUARD] MIC restart: issued StartMicrophone after 500ms');
+            } catch (e) {
+              LogUtil.d('[SAFEGUARD] MIC restart error on start: $e');
+            }
+          });
+        } catch (e) {
+          LogUtil.d('[SAFEGUARD] MIC restart error on stop: $e');
+        }
       }
     }
   }
@@ -1028,8 +1045,10 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
         _mic_mute = !enable;
       });
       if (_mic_mute == true) {
+        LogUtil.d('[MIC] OFF -> StopMicrophone');
         pc!.StopMicrophone();
       } else {
+        LogUtil.d('[MIC] ON  -> StartMicrophone');
         pc!.StartMicrophone();
       }
     }
@@ -1077,6 +1096,15 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
 
     if (_isFullscreen) {
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      // Set orientation based on isVertical: portrait for vertical, landscape for horizontal
+      if (widget.isVertical) {
+        await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      } else {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      }
       widget.onFullscreen?.call(true);
     } else {
       await _resetOrientation();
@@ -1122,11 +1150,11 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
 
   Widget _buildVideoView() {
     return Container(
-      color: Colors.black, // Always black background
-      margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
-      child: Stack(children: [RTCVideoView(_remoteRenderer, objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover)]),
+      color: Colors.black,
+      child: RTCVideoView(
+        _remoteRenderer,
+        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+      ),
     );
   }
 
@@ -1177,20 +1205,44 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black, // Always black background
-      child: Stack(
-        children: [
-          _isFullscreen
-              ? Positioned.fill(child: _buildVideoView())
-              : Center(
-                  child: AspectRatio(aspectRatio: widget.isVertical ? 9 / 16 : 16 / 9, child: _buildVideoView()),
-                ),
-          if (widget.showControls)
-            _isFullscreen
-                ? Positioned(left: 0, right: 0, bottom: 0, child: _buildControls())
-                : Positioned(left: 0, right: 0, bottom: 0, child: _buildControls()),
-        ],
+    // For fullscreen, use full screen with proper constraints
+    if (_isFullscreen) {
+      return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          // Use screen size from MediaQuery, or fallback to constraints
+          final screenSize = MediaQuery.of(context).size;
+          final width = constraints.maxWidth.isFinite ? constraints.maxWidth : screenSize.width;
+          final height = constraints.maxHeight.isFinite ? constraints.maxHeight : screenSize.height;
+
+          return SizedBox(
+            width: width,
+            height: height,
+            child: Container(
+              color: Colors.black,
+              child: Stack(
+                children: [
+                  Positioned.fill(child: _buildVideoView()),
+                  if (widget.showControls) Positioned(left: 0, right: 0, bottom: 0, child: _buildControls()),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    // For normal mode, enforce 16:9 aspect ratio (full width, dynamic height)
+    return AspectRatio(
+      aspectRatio: widget.isVertical ? 9 / 16 : 16 / 9,
+      child: Container(
+        color: Colors.black,
+        width: double.infinity,
+        child: Stack(
+          children: [
+            Positioned.fill(child: _buildVideoView()),
+            if (widget.showControls) Positioned(left: 0, right: 0, bottom: 0, child: _buildControls()),
+          ],
+        ),
       ),
     );
   }
@@ -1199,7 +1251,6 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
   deactivate() {
     super.deactivate();
     eventBus.off(_recvMsgEvent);
-    _remoteRenderer.dispose();
   }
 
   @override
