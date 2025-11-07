@@ -98,9 +98,9 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
   final String _user = "admin";
   final String _password = "123456";
   final String _mode = "live";
-  final String _source = "MainStream";
+  String _source = "SubStream"; // Use widget.source, but allow dynamic changes
   final bool _onlydatachnannel = false;
-  final String _sessionId = randomNumeric(32);
+  String _sessionId = randomNumeric(32); // Allow regeneration for source changes
   final int _startTime = currentTimeMillis();
 
   MediaStream? _localStream;
@@ -145,6 +145,7 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
     WidgetsBinding.instance.addObserver(this);
     _peerId = widget.peerId;
     _usedatachannel = widget.usedatachannel;
+    _source = widget.source;
     _selfId = randomNumeric(32);
     _serverUrl = WSS_SERVER_URL + _selfId!;
 
@@ -1126,6 +1127,38 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
     }
   }
 
+  // toggle source (SubStream <-> MainStream)
+  Future<void> _toggleSource() async {
+    if (_inCalling == true) {
+      // Close current session
+      _stopRecord();
+      bye(); // Send disconnect message
+      await _closeSession();
+
+      // Generate new session ID for new connection
+      _sessionId = randomNumeric(32);
+
+      // Reset calling state and toggle source
+      setState(() {
+        _inCalling = false;
+        _source = _source == "SubStream" ? "MainStream" : "SubStream";
+      });
+
+      LogUtil.d('[SOURCE] Changed to: $_source, reconnecting...');
+
+      // Reconnect with new source
+      await Future.delayed(const Duration(milliseconds: 500));
+      await connect();
+      startcall(); // startcall() returns void, no await needed
+    } else {
+      // If not connected yet, just update the source
+      setState(() {
+        _source = _source == "SubStream" ? "MainStream" : "SubStream";
+      });
+      LogUtil.d('[SOURCE] Changed to: $_source (not connected yet)');
+    }
+  }
+
   // capture frame
   Future<void> _captureFrame() async {
     if (!widget.showCapture) return;
@@ -1203,6 +1236,35 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
     );
   }
 
+  Widget _buildTopControls() {
+    LogUtil.d('[TOP_CONTROLS] Building top controls, source: $_source, showControls: ${widget.showControls}');
+    return Positioned(
+      right: 8,
+      bottom: 48, // 20px above the controls (controls are ~48px tall)
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            LogUtil.d('[TOP_CONTROLS] Tapped, current source: $_source');
+            _toggleSource();
+          },
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text(
+              _source == "MainStream" ? "HD" : "SD",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // For fullscreen, use full screen with proper constraints
@@ -1222,6 +1284,7 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
               child: Stack(
                 children: [
                   Positioned.fill(child: _buildVideoView()),
+                  if (widget.showControls) _buildTopControls(),
                   if (widget.showControls) Positioned(left: 0, right: 0, bottom: 0, child: _buildControls()),
                 ],
               ),
@@ -1240,6 +1303,7 @@ class _HanetWebRTCSingleState extends State<HanetWebRTCSingle> with WidgetsBindi
         child: Stack(
           children: [
             Positioned.fill(child: _buildVideoView()),
+            if (widget.showControls) _buildTopControls(), // Added for testing
             if (widget.showControls) Positioned(left: 0, right: 0, bottom: 0, child: _buildControls()),
           ],
         ),

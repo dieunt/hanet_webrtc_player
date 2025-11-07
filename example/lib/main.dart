@@ -29,7 +29,7 @@ class PlayerExample extends StatefulWidget {
 
 class _PlayerExampleState extends State<PlayerExample> {
   bool _showPlayer = true;
-  bool _showMultiplePlayer = false;
+  bool _showMultiplePlayer = true;
   final GlobalKey _playerKey = GlobalKey();
   Key? _multiplePlayerKey = UniqueKey();
   bool _isFullscreen = false;
@@ -55,10 +55,10 @@ class _PlayerExampleState extends State<PlayerExample> {
     super.initState();
     _player = HanetWebRTCSingle(
       key: _playerKey,
-      peerId: 'HANT-00-LSCF-3K51-00002474',
+      peerId: 'HANT-00-TLV3-8V2G-00000109',
       showFullscreen: true,
-      showCapture: true,
-      showRecord: true,
+      showCapture: false,
+      showRecord: false,
       showMic: true,
       showVolume: true,
       showControls: true,
