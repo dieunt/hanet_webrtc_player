@@ -28,7 +28,7 @@ class PlayerExample extends StatefulWidget {
 }
 
 class _PlayerExampleState extends State<PlayerExample> {
-  bool _showPlayer = true;
+  bool _showPlayer = false;
   bool _showMultiplePlayer = true;
   final GlobalKey _playerKey = GlobalKey();
   Key? _multiplePlayerKey = UniqueKey();
